@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"sync"
 	"time"
+	"reflect"
 )
 const (
 	DEBUG_LEVEL_NETWORK = 0x01
@@ -194,15 +195,16 @@ func (m *MTProto) reconnect(newaddr string) error {
 }
 
 func (m *MTProto) pingRoutine() {
-	//log.Println("Ping routine started.")
-	//defer log.Println("Ping routine finished.")
 	for {
 		select {
 		case <-m.stopPing:
 			m.allDone <- struct{}{}
 			return
-		case <-time.After(60 * time.Second):
-			m.queueSend <- packetToSend{TL_ping{0xCADACADA}, nil}
+		case <-time.After(30 * time.Second):
+			resp := make(chan TL, 1)
+			m.queueSend <- packetToSend{TL_ping{0xCADACADA}, resp}
+			x := <-resp
+			fmt.Println("PingReply::", reflect.TypeOf(x).String(), x)
 		}
 	}
 }
@@ -222,13 +224,10 @@ func (m *MTProto) sendRoutine() {
 }
 
 func (m *MTProto) readRoutine() {
-	//log.Println("Read routine started.")
-	//defer log.Println("Read routine finished.")
 	for {
 		data, err := m.read(m.stopRead)
 		if err != nil {
 			fmt.Println("ReadRoutine:", err)
-			//continue
 			os.Exit(2)
 		}
 		if data == nil {

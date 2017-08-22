@@ -64,6 +64,7 @@ type Dialog struct {
 	UnreadCount    int32
 	NotifySettings interface{}
 }
+
 func (d *Dialog) GetInputPeer() TL {
 	switch d.Type {
 	case DIALOG_TYPE_CHAT:
@@ -83,9 +84,10 @@ func (d *Dialog) GetInputPeer() TL {
 		return nil
 	}
 }
+
 type Peer struct {
-	Type 	string
-	ID 		int32
+	Type string
+	ID   int32
 }
 type GeoPoint struct {
 	Longtitude float32
@@ -119,26 +121,34 @@ type Contact struct {
 	Mutual bool
 }
 type Document struct {
-	ID          int64
+	ID         int64
 	AccessHash int64
-	Date        int32
+	Date       int32
 	Mimetype   string
-	Size        int32
-	Thumb       *PhotoSize
+	Size       int32
+	Thumb      *PhotoSize
 	DcID       int32
-	Version     int32
+	Version    int32
 
-	attributes  []TL // DocumentAttribute
+	attributes []TL // DocumentAttribute
 }
+
 func (d *Document) GetInputFileLocation() TL_inputDocumentFileLocation {
 	return TL_inputDocumentFileLocation{
-		id: d.ID,
+		id:          d.ID,
 		access_hash: d.AccessHash,
+	}
+}
+func (p *PhotoSize) GetInputFileLocation() TL_inputFileLocation {
+	return TL_inputFileLocation{
+		p.Location.VolumeID,
+		p.Location.LocalID,
+		p.Location.Secret,
 	}
 }
 func NewPeer(in TL) (p *Peer) {
 	p = new(Peer)
-	switch x:= in.(type) {
+	switch x := in.(type) {
 	case TL_peerChannel:
 		p.Type = PEER_TYPE_CHANNEL
 		p.ID = x.channel_id
@@ -200,7 +210,7 @@ func NewDocument(in TL) (d *Document) {
 	switch x := in.(type) {
 	case TL_document:
 		d.ID = x.id
-		d.AccessHash  = x.access_hash
+		d.AccessHash = x.access_hash
 		d.Mimetype = x.mime_type
 		d.Date = x.date
 		d.DcID = x.dc_id
@@ -249,4 +259,3 @@ func NewContact(in TL) (contact *Contact) {
 	}
 	return
 }
-

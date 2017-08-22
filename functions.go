@@ -455,7 +455,6 @@ func (m *MTProto) Upload_GetFile(in TL, offset, limit int32) []byte {
 	x := <-resp
 	switch f := x.(type) {
 	case TL_upload_file:
-		fmt.Println(f)
 		return f.bytes
 	default:
 		log.Println(reflect.TypeOf(f).String(), f)

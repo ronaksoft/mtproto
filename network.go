@@ -103,6 +103,7 @@ func (m *MTProto) read(stop <-chan struct{}) (interface{}, error) {
 
 	err = m.conn.SetReadDeadline(time.Now().Add(300 * time.Second))
 	if err != nil {
+		log.Println("ReadDeadLine")
 		return nil, err
 	}
 	b := make([]byte, 1)
@@ -115,6 +116,7 @@ func (m *MTProto) read(stop <-chan struct{}) (interface{}, error) {
 		}
 	}
 	if err != nil {
+		log.Println("read 1st byte")
 		return nil, err
 	}
 	if b[0] < 127 {
@@ -123,6 +125,7 @@ func (m *MTProto) read(stop <-chan struct{}) (interface{}, error) {
 		b := make([]byte, 3)
 		n, err = m.conn.Read(b)
 		if err != nil {
+			log.Println("read 3-bytes byte")
 			return nil, err
 		}
 		size = (int(b[0]) | int(b[1]) << 8 | int(b[2]) << 16) << 2
@@ -133,6 +136,7 @@ func (m *MTProto) read(stop <-chan struct{}) (interface{}, error) {
 	for left > 0 {
 		n, err = m.conn.Read(buf[size - left:])
 		if err != nil {
+			log.Println("reading error:", size, left)
 			return nil, err
 		}
 		left -= n
