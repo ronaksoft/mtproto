@@ -442,7 +442,7 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 	}
 }
 
-func (m *MTProto) Upload_GetFile(in TL, offset, limit int32) {
+func (m *MTProto) Upload_GetFile(in TL, offset, limit int32) []byte {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_upload_getFile{
@@ -456,6 +456,9 @@ func (m *MTProto) Upload_GetFile(in TL, offset, limit int32) {
 	switch f := x.(type) {
 	case TL_upload_file:
 		fmt.Println(f)
+		return f.bytes
+	default:
+		log.Println(reflect.TypeOf(f).String(), f)
 	}
-
+	return []byte{}
 }
