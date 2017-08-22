@@ -151,8 +151,6 @@ func NewMessage(in TL) (m *Message) {
 		}
 		if x.fwd_from != nil {
 			m.ForwardHeader = NewMessageForwardHeader(x.fwd_from)
-		} else {
-			m.ForwardHeader = new(MessageForwardHeader)
 		}
 	case TL_messageService:
 		m.flags = x.flags
