@@ -9,7 +9,6 @@ import (
 	"runtime"
 	"sync"
 	"time"
-	"reflect"
 )
 const (
 	DEBUG_LEVEL_NETWORK = 0x01
