@@ -201,10 +201,10 @@ func (m *MTProto) pingRoutine() {
 			m.allDone <- struct{}{}
 			return
 		case <-time.After(30 * time.Second):
-			resp := make(chan TL, 1)
-			m.queueSend <- packetToSend{TL_ping{0xCADACADA}, resp}
-			x := <-resp
-			fmt.Println("PingReply::", reflect.TypeOf(x).String(), x)
+			//resp := make(chan TL, 1)
+			m.queueSend <- packetToSend{TL_ping{0xCADACADA}, nil}
+			//x := <-resp
+			//fmt.Println("PingReply::", reflect.TypeOf(x).String(), x)
 		}
 	}
 }
