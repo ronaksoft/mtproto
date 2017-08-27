@@ -44,11 +44,11 @@ func NewUpdateState(input TL) *UpdateState {
 	us := new(UpdateState)
 	switch in := input.(type) {
 	case TL_updates_state:
-		us.Qts = in.qts
-		us.Pts = in.pts
-		us.Seq = in.seq
-		us.Date = in.date
-		us.UnreadCounts = in.unread_count
+		us.Qts = in.Qts
+		us.Pts = in.Pts
+		us.Seq = in.Seq
+		us.Date = in.Date
+		us.UnreadCounts = in.Unread_count
 	}
 	return us
 }
@@ -58,14 +58,14 @@ func NewUpdate(input TL) *Update {
 	switch u := input.(type) {
 	case TL_updateNewMessage:
 		update.Type = UPDATE_TYPE_NEW_MESSAGE
-		update.Pts = u.pts
-		update.PtsCount = u.pts_count
-		update.Message = NewMessage(u.message)
+		update.Pts = u.Pts
+		update.PtsCount = u.Pts_count
+		update.Message = NewMessage(u.Message)
 	case TL_updateNewChannelMessage:
 		update.Type = UPDATE_TYPE_CHANNEL_NEW_MESSAGE
-		update.Message = NewMessage(u.message)
-		update.PtsCount = u.pts_count
-		update.Pts = u.pts
+		update.Message = NewMessage(u.Message)
+		update.PtsCount = u.Pts_count
+		update.Pts = u.Pts
 	default:
 		update.Type = reflect.TypeOf(u).String()
 	}

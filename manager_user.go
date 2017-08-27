@@ -138,7 +138,7 @@ func NewUser(in TL) (user *User) {
 			user.Photo = NewUserProfilePhoto(u.Photo)
 		}
 		if u.Flags&1<<6 != 0 {
-			user.Status = NewUserStatus(u.status)
+			user.Status = NewUserStatus(u.Status)
 		}
 
 	default:

@@ -146,6 +146,14 @@ func (p *PhotoSize) GetInputFileLocation() TL_inputFileLocation {
 		p.Location.Secret,
 	}
 }
+func (f *FileLocation) GetInputFileLocation() TL_inputFileLocation {
+	return TL_inputFileLocation{
+		f.VolumeID,
+		f.LocalID,
+		f.Secret,
+	}
+}
+
 func NewPeer(in TL) (p *Peer) {
 	p = new(Peer)
 	switch x := in.(type) {
