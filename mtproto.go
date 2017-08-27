@@ -145,9 +145,9 @@ func (m *MTProto) Connect() error {
 	switch x.(type) {
 	case TL_config:
 		m.dclist = make(map[int32]string, 5)
-		for _, v := range x.(TL_config).dc_options {
+		for _, v := range x.(TL_config).Dc_options {
 			v := v.(TL_dcOption)
-			m.dclist[v.id] = fmt.Sprintf("%s:%d", v.ip_address, v.port)
+			m.dclist[v.Id] = fmt.Sprintf("%s:%d", v.Ip_address, v.Port)
 		}
 	default:
 		return fmt.Errorf("Got: %T", x)
