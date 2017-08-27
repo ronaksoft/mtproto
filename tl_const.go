@@ -1,7 +1,7 @@
 package mtproto
 
 const (
-	layer = 57
+	layer = 66
 
 	// https://core.telegram.org/schema/mtproto
 	crc_vector                     = 0x1cb5c415
