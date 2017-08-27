@@ -31,7 +31,7 @@ func normalize(s string) string {
 	}
 	y := string(x)
 	if y == "type" {
-		return "_type"
+		return "_Type"
 	}
 	return y
 }
@@ -114,6 +114,7 @@ func main() {
 		c := _cons[key]
 		fmt.Printf("type TL_%s struct {\n", c.predicate)
 		for _, t := range c.params {
+			t.name = strings.Title(t.name)
 			//fmt.Printf("%s\t", t.name)
 			if strings.HasPrefix(t._type, "flags") {
 				subType := string(t._type[strings.Index(t._type, "?") + 1:])
@@ -216,6 +217,7 @@ func main() {
 		fmt.Print("x := NewEncodeBuf(512)\n")
 		fmt.Printf("x.UInt(crc_%s)\n", c.predicate)
 		for _, t := range c.params {
+			t.name = strings.Title(t.name)
 			if strings.HasPrefix(t._type, "flags") {
 				subType := string(t._type[strings.Index(t._type, "?") + 1:])
 				switch subType {
@@ -305,6 +307,7 @@ func (m *DecodeBuf) ObjectGenerated(constructor uint32) (r TL) {
 		}
 		fmt.Printf("r = TL_%s{\n", c.predicate)
 		for _, t := range c.params {
+			t.name = strings.Title(t.name)
 			if strings.HasPrefix(t._type, "flags") {
 				flagBit, _ := strconv.Atoi(string(t._type[strings.Index(t._type, "_") + 1:strings.Index(t._type, "?")]))
 				subType := string(t._type[strings.Index(t._type, "?") + 1:])
