@@ -13,11 +13,11 @@ func (m *MTProto) Auth_SendCode(phonenumber string) (string, error) {
 	for flag {
 		resp := make(chan TL, 1)
 		m.queueSend <- packetToSend{TL_auth_sendCode{
-			flags:          1,
-			current_number: TL_boolTrue{},
-			phone_number:   phonenumber,
-			api_id:         appId,
-			api_hash:       appHash,
+			Flags:          1,
+			Current_number: TL_boolTrue{},
+			Phone_number:   phonenumber,
+			Api_id:         appId,
+			Api_hash:       appHash,
 		}, resp}
 		x := <-resp
 		switch x.(type) {
@@ -53,11 +53,11 @@ func (m *MTProto) Auth_SendCode(phonenumber string) (string, error) {
 
 	}
 
-	if authSentCode.flags&1 == 0 {
+	if authSentCode.Flags&1 == 0 {
 		return "", errors.New("Cannot sign up yet")
 	}
 
-	return authSentCode.phone_code_hash, nil
+	return authSentCode.Phone_code_hash, nil
 }
 
 func (m *MTProto) Auth_SignIn(phonenumber string, hash, code string) error {
@@ -71,8 +71,8 @@ func (m *MTProto) Auth_SignIn(phonenumber string, hash, code string) error {
 	if !ok {
 		return fmt.Errorf("RPC: %#v", x)
 	}
-	userSelf := auth.user.(TL_user)
-	fmt.Printf("Signed in: id %d name <%s %s>\n", userSelf.id, userSelf.first_name, userSelf.last_name)
+	userSelf := auth.User.(TL_user)
+	fmt.Printf("Signed in: id %d name <%s %s>\n", userSelf.Id, userSelf.First_name, userSelf.Last_name)
 	return nil
 }
 
@@ -102,15 +102,15 @@ func (m *MTProto) Contacts_GetContacts(hash string) ([]Contact, []User) {
 		log.Println(fmt.Sprintf("RPC: %#v", x))
 		return []Contact{}, []User{}
 	}
-	TContacts := make([]Contact, 0, len(list.contacts))
-	TUsers := make([]User, 0, len(list.users))
-	for _, v := range list.contacts {
+	TContacts := make([]Contact, 0, len(list.Contacts))
+	TUsers := make([]User, 0, len(list.Users))
+	for _, v := range list.Contacts {
 		TContacts = append(
 			TContacts,
 			*NewContact(v),
 		)
 	}
-	for _, v := range list.users {
+	for _, v := range list.Users {
 		switch u := v.(type) {
 		case TL_user, TL_userEmpty:
 			TUsers = append(TUsers, *NewUser(u))
@@ -127,10 +127,10 @@ func (m *MTProto) Channels_GetParticipants(channel TL, offset, limit int32) []Us
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_channels_getParticipants{
-			channel: channel,
-			filter:  TL_channelParticipantsRecent{},
-			offset:  offset,
-			limit:   limit,
+			Channel: channel,
+			Filter:  TL_channelParticipantsRecent{},
+			Offset:  offset,
+			Limit:   limit,
 		},
 		resp,
 	}
@@ -138,7 +138,7 @@ func (m *MTProto) Channels_GetParticipants(channel TL, offset, limit int32) []Us
 	users := make([]User, 0)
 	switch input := x.(type) {
 	case TL_channels_channelParticipants:
-		for _, u := range input.users {
+		for _, u := range input.Users {
 			users = append(users, *NewUser(u))
 		}
 	case TL_rpc_error:
@@ -153,7 +153,7 @@ func (m *MTProto) Channels_GetChannels(in []TL) []Chat {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_channels_getChannels{
-			id: in,
+			Id: in,
 		},
 		resp,
 	}
@@ -161,7 +161,7 @@ func (m *MTProto) Channels_GetChannels(in []TL) []Chat {
 	chats := make([]Chat, 0, len(in))
 	switch input := x.(type) {
 	case TL_messages_chats:
-		for _, ch := range input.chats {
+		for _, ch := range input.Chats {
 			chats = append(chats, *NewChat(ch))
 		}
 		return chats
@@ -178,8 +178,8 @@ func (m *MTProto) Channels_GetMessages(channel TL, ids []int32) []Message {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_channels_getMessages{
-			channel: channel,
-			id:      ids,
+			Channel: channel,
+			Id:      ids,
 		},
 		resp,
 	}
@@ -187,17 +187,17 @@ func (m *MTProto) Channels_GetMessages(channel TL, ids []int32) []Message {
 	messages := make([]Message, 0, len(ids))
 	switch input := x.(type) {
 	case TL_messages_messages:
-		for _, m := range input.messages {
+		for _, m := range input.Messages {
 			messages = append(messages, *NewMessage(m))
 		}
 		return messages
 	case TL_messages_messagesSlice:
-		for _, m := range input.messages {
+		for _, m := range input.Messages {
 			messages = append(messages, *NewMessage(m))
 		}
 		return messages
 	case TL_messages_channelMessages:
-		for _, m := range input.messages {
+		for _, m := range input.Messages {
 			messages = append(messages, *NewMessage(m))
 		}
 		return messages
@@ -216,10 +216,10 @@ func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetI
 	for {
 		m.queueSend <- packetToSend{
 			TL_messages_getDialogs{
-				offset_id:   offsetID,
-				offset_date: offsetDate,
-				limit:       limit,
-				offset_peer: offsetInputPeer,
+				Offset_id:   offsetID,
+				Offset_date: offsetDate,
+				Limit:       limit,
+				Offset_peer: offsetInputPeer,
 			},
 			resp,
 		}
@@ -230,19 +230,19 @@ func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetI
 		var dialogs []Dialog
 		switch d := x.(type) {
 		case TL_messages_dialogsSlice:
-			for _, v := range d.messages {
+			for _, v := range d.Messages {
 				m := NewMessage(v)
 				mMessages[m.ID] = m
 			}
-			for _, v := range d.chats {
+			for _, v := range d.Chats {
 				c := NewChat(v)
 				mChats[c.ID] = c
 			}
-			for _, v := range d.users {
+			for _, v := range d.Users {
 				u := NewUser(v)
 				mUsers[u.ID] = u
 			}
-			for _, v := range d.dialogs {
+			for _, v := range d.Dialogs {
 				d := NewDialog(v)
 				d.TopMessage = mMessages[d.TopMessageID]
 				switch d.Type {
@@ -257,17 +257,17 @@ func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetI
 				}
 				dialogs = append(dialogs, *d)
 			}
-			return dialogs, int(d.count)
+			return dialogs, int(d.Count)
 		case TL_messages_dialogs:
-			for _, v := range d.messages {
+			for _, v := range d.Messages {
 				m := NewMessage(v)
 				mMessages[m.ID] = m
 			}
-			for _, v := range d.chats {
+			for _, v := range d.Chats {
 				c := NewChat(v)
 				mChats[c.ID] = c
 			}
-			for _, v := range d.dialogs {
+			for _, v := range d.Dialogs {
 				d := NewDialog(v)
 				d.TopMessage = mMessages[d.TopMessageID]
 				switch d.Type {
@@ -282,7 +282,7 @@ func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetI
 				}
 				dialogs = append(dialogs, *d)
 			}
-			return dialogs, len(d.chats)
+			return dialogs, len(d.Chats)
 		default:
 			return []Dialog{}, 0
 		}
@@ -294,7 +294,7 @@ func (m *MTProto) Messages_GetChats(chatIDs []int32) []Chat {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_messages_getChats{
-			id: chatIDs,
+			Id: chatIDs,
 		},
 		resp,
 	}
@@ -302,7 +302,7 @@ func (m *MTProto) Messages_GetChats(chatIDs []int32) []Chat {
 	chats := make([]Chat, 0, len(chatIDs))
 	switch input := x.(type) {
 	case TL_messages_chats:
-		for _, ch := range input.chats {
+		for _, ch := range input.Chats {
 			chats = append(chats, *NewChat(ch))
 		}
 		return chats
@@ -319,7 +319,7 @@ func (m *MTProto) Messages_GetFullChat (chatID int32) *Chat {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_messages_getFullChat{
-			chat_id: chatID,
+			Chat_id: chatID,
 		},
 		resp,
 	}
@@ -338,8 +338,8 @@ func (m *MTProto) Messages_GetHistory(inputPeer TL, limit int32) ([]Message, int
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_messages_getHistory{
-			peer:  inputPeer,
-			limit: limit,
+			Peer:  inputPeer,
+			Limit: limit,
 		},
 		resp,
 	}
@@ -347,20 +347,20 @@ func (m *MTProto) Messages_GetHistory(inputPeer TL, limit int32) ([]Message, int
 	messages := make([]Message, 0, 20)
 	switch input := x.(type) {
 	case TL_messages_messages:
-		for _, msg := range input.messages {
+		for _, msg := range input.Messages {
 			messages = append(messages, *NewMessage(msg))
 		}
 		return messages, int32(len(messages))
 	case TL_messages_messagesSlice:
-		for _, msg := range input.messages {
+		for _, msg := range input.Messages {
 			messages = append(messages, *NewMessage(msg))
 		}
-		return messages, input.count
+		return messages, input.Count
 	case TL_messages_channelMessages:
-		for _, msg := range input.messages {
+		for _, msg := range input.Messages {
 			messages = append(messages, *NewMessage(msg))
 		}
-		return messages, input.count
+		return messages, input.Count
 	case TL_rpc_error:
 		fmt.Println(input.error_message, input.error_code)
 		return messages, 0
@@ -391,9 +391,9 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_updates_getDifference{
-			pts:  pts,
-			qts:  qts,
-			date: date,
+			Pts:  pts,
+			Qts:  qts,
+			Date: date,
 		},
 		resp,
 	}
@@ -405,33 +405,33 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 		return updateDifference
 	case TL_updates_difference:
 		updateDifference.IsSlice = false
-		updateDifference.IntermediateState = *NewUpdateState(u.state)
-		for _ , m := range u.new_messages {
+		updateDifference.IntermediateState = *NewUpdateState(u.State)
+		for _ , m := range u.New_messages {
 			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
 		}
-		for _, ch := range u.chats {
+		for _, ch := range u.Chats {
 			updateDifference.Chats = append(updateDifference.Chats, *NewChat(ch))
 		}
-		for _, user := range u.users {
+		for _, user := range u.Users {
 			updateDifference.Users = append(updateDifference.Users, *NewUser(user))
 		}
-		for _, update := range u.other_updates {
+		for _, update := range u.Other_updates {
 			updateDifference.OtherUpdates = append(updateDifference.OtherUpdates, *NewUpdate(update))
 		}
 		return updateDifference
 	case TL_updates_differenceSlice:
 		updateDifference.IsSlice = true
-		updateDifference.IntermediateState = *NewUpdateState(u.intermediate_state)
-		for _ , m := range u.new_messages {
+		updateDifference.IntermediateState = *NewUpdateState(u.Intermediate_state)
+		for _ , m := range u.New_messages {
 			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
 		}
-		for _, ch := range u.chats {
+		for _, ch := range u.Chats {
 			updateDifference.Chats = append(updateDifference.Chats, *NewChat(ch))
 		}
-		for _, user := range u.users {
+		for _, user := range u.Users {
 			updateDifference.Users = append(updateDifference.Users, *NewUser(user))
 		}
-		for _, update := range u.other_updates {
+		for _, update := range u.Other_updates {
 			updateDifference.OtherUpdates = append(updateDifference.OtherUpdates, *NewUpdate(update))
 		}
 
@@ -446,16 +446,16 @@ func (m *MTProto) Upload_GetFile(in TL, offset, limit int32) []byte {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_upload_getFile{
-			offset: offset,
-			limit: limit,
-			location: in,
+			Offset: offset,
+			Limit: limit,
+			Location: in,
 		},
 		resp,
 	}
 	x := <-resp
 	switch f := x.(type) {
 	case TL_upload_file:
-		return f.bytes
+		return f.Bytes
 	default:
 		log.Println(reflect.TypeOf(f).String(), f)
 	}

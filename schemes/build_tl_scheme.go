@@ -66,7 +66,7 @@ func main() {
 			data := data.(map[string]interface{})
 
 			// id
-			idx, err := strconv.Atoi(data["id"].(string))
+			idx, err := data["id"].(json.Number).Int64()
 			if err != nil {
 				fmt.Println(err)
 				return
