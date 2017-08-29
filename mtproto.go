@@ -136,14 +136,16 @@ func (m *MTProto) Connect() error {
 				runtime.GOOS + "/" + runtime.GOARCH,
 				"1.0.0",
 				"en",
-				"english",
+				"",
 				"en",
-				TL_help_getConfig{},
+				TL_langpack_getLanguages{},
+				//TL_help_getConfig{},
 			},
 		},
 		resp,
 	}
 	x = <-resp
+	fmt.Println(x)
 	switch x.(type) {
 	case TL_config:
 		m.dclist = make(map[int32]string, 5)
@@ -152,6 +154,7 @@ func (m *MTProto) Connect() error {
 			m.dclist[v.Id] = fmt.Sprintf("%s:%d", v.Ip_address, v.Port)
 		}
 	default:
+		fmt.Println(x)
 		return fmt.Errorf("Got: %T", x)
 	}
 
