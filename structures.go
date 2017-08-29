@@ -1,11 +1,5 @@
 package mtproto
 
-import (
-	"log"
-	"reflect"
-)
-
-
 type Peer struct {
 	Type string
 	ID   int32
