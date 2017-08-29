@@ -25,7 +25,7 @@ type Chat struct {
 	Title        string
 	Photo        *ChatProfilePhoto
 	Participants int32
-	Members 	  []ChatMember
+	Members      []ChatMember
 	Date         int32
 	Left         bool
 	Version      int32
@@ -35,11 +35,11 @@ type Chat struct {
 	CheckedIn    bool
 }
 type ChatMember struct {
-	UserID 		int32
-	InviterID	int32
-	Date 		int32
+	UserID    int32
+	InviterID int32
+	Date      int32
 }
-type ChannelParticipantFilter struct {}
+type ChannelParticipantFilter struct{}
 
 func (ch *Chat) GetPeer() TL {
 	switch ch.Type {
@@ -50,7 +50,6 @@ func (ch *Chat) GetPeer() TL {
 	case CHAT_TYPE_CHANNEL, CHAT_TYPE_CHANNEL_FORBIDDEN:
 		return TL_peerChannel{
 			Channel_id: ch.ID,
-
 		}
 	default:
 		return nil
@@ -149,31 +148,4 @@ func NewChat(input TL) (chat *Chat) {
 	}
 	return chat
 
-}
-func NewInputPeerUser(userID int32, accessHash int64) TL {
-	return TL_inputPeerUser{
-		User_id: userID,
-		Access_hash: accessHash,
-	}
-}
-func NewInputPeerChat(chatID int32) TL {
-	return TL_inputPeerChat{
-		Chat_id: chatID,
-	}
-}
-func NewInputPeerChannel(channelID int32, accessHash int64) TL {
-	return TL_inputPeerChannel{
-		Channel_id:  channelID,
-		Access_hash: accessHash,
-	}
-}
-func NewPeerChat(chatID int32) TL {
-	return TL_peerChat{
-		Chat_id: chatID,
-	}
-}
-func NewPeerChannel(channelID int32) TL {
-	return TL_peerChannel{
-		Channel_id: channelID,
-	}
 }
