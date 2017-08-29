@@ -1,10 +1,5 @@
 package mtproto
 
-const (
-	DIALOG_TYPE_CHAT    = "CHAT"
-	DIALOG_TYPE_USER    = "USER"
-	DIALOG_TYPE_CHANNEL = "CHANNEL"
-)
 
 type Dialog struct {
 	Type           string
