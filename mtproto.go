@@ -136,6 +136,8 @@ func (m *MTProto) Connect() error {
 				runtime.GOOS + "/" + runtime.GOARCH,
 				"1.0.0",
 				"en",
+				"english",
+				"en",
 				TL_help_getConfig{},
 			},
 		},

@@ -93,9 +93,12 @@ func (m *MTProto) Auth_CheckPhone(phonenumber string) bool {
 	return false
 }
 
-func (m *MTProto) Contacts_GetContacts(hash string) ([]Contact, []User) {
+func (m *MTProto) Contacts_GetContacts(hash int32) ([]Contact, []User) {
 	resp := make(chan TL, 1)
-	m.queueSend <- packetToSend{TL_contacts_getContacts{hash}, resp}
+	m.queueSend <- packetToSend{TL_contacts_getContacts{
+		hash},
+		resp,
+	}
 	x := <-resp
 	list, ok := x.(TL_contacts_contacts)
 	if !ok {
@@ -315,7 +318,7 @@ func (m *MTProto) Messages_GetChats(chatIDs []int32) []Chat {
 	}
 }
 
-func (m *MTProto) Messages_GetFullChat (chatID int32) *Chat {
+func (m *MTProto) Messages_GetFullChat(chatID int32) *Chat {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_messages_getFullChat{
@@ -327,7 +330,7 @@ func (m *MTProto) Messages_GetFullChat (chatID int32) *Chat {
 	chat := new(Chat)
 	switch input := x.(type) {
 	case TL_messages_chatFull:
-		chat =  NewChat(input)
+		chat = NewChat(input)
 	default:
 
 	}
@@ -391,11 +394,11 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_updates_getDifference{
-			Flags: 1,
-			Pts:  pts,
+			Flags:           1,
+			Pts:             pts,
 			Pts_total_limit: 100,
-			Qts:  qts,
-			Date: date,
+			Qts:             qts,
+			Date:            date,
 		},
 		resp,
 	}
@@ -408,7 +411,7 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 	case TL_updates_difference:
 		updateDifference.IsSlice = false
 		updateDifference.IntermediateState = *NewUpdateState(u.State)
-		for _ , m := range u.New_messages {
+		for _, m := range u.New_messages {
 			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
 		}
 		for _, ch := range u.Chats {
@@ -424,7 +427,7 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 	case TL_updates_differenceSlice:
 		updateDifference.IsSlice = true
 		updateDifference.IntermediateState = *NewUpdateState(u.Intermediate_state)
-		for _ , m := range u.New_messages {
+		for _, m := range u.New_messages {
 			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
 		}
 		for _, ch := range u.Chats {
@@ -452,7 +455,7 @@ func (m *MTProto) Updates_GetChannelDifference(inputChannel TL) *ChannelUpdateDi
 	m.queueSend <- packetToSend{
 		TL_updates_getChannelDifference{
 			Channel: inputChannel,
-			Filter: TL_channelMessagesFilterEmpty{},
+			Filter:  TL_channelMessagesFilterEmpty{},
 		},
 		resp,
 	}
@@ -478,8 +481,8 @@ func (m *MTProto) Upload_GetFile(in TL, offset, limit int32) []byte {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_upload_getFile{
-			Offset: offset,
-			Limit: limit,
+			Offset:   offset,
+			Limit:    limit,
 			Location: in,
 		},
 		resp,
