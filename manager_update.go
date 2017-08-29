@@ -31,13 +31,23 @@ type UpdateState struct {
 	UnreadCounts int32
 }
 type UpdateDifference struct {
-	IsSlice 			bool
+	IsSlice           bool
 	Total             int32
 	NewMessages       []Message
 	OtherUpdates      []Update
 	Chats             []Chat
 	Users             []User
 	IntermediateState UpdateState
+}
+
+type ChannelUpdateDifference struct {
+	Empty       bool
+	TooLong     bool
+	Flags       int32
+	Final       bool
+	Pts         int32
+	Timeout     int32
+	NewMessages []Message
 }
 
 func NewUpdateState(input TL) *UpdateState {

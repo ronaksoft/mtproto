@@ -391,7 +391,9 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_updates_getDifference{
+			Flags: 1,
 			Pts:  pts,
+			Pts_total_limit: 100,
 			Qts:  qts,
 			Date: date,
 		},
@@ -436,10 +438,40 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 		}
 
 		return updateDifference
+	case TL_updates_differenceTooLong:
+		updateDifference.IntermediateState.Pts = u.Pts
+		return updateDifference
 	default:
 		log.Println(fmt.Sprintf("RPC: %#v", x))
 		return updateDifference
 	}
+}
+
+func (m *MTProto) Updates_GetChannelDifference(inputChannel TL) *ChannelUpdateDifference {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_updates_getChannelDifference{
+			Channel: inputChannel,
+			Filter: TL_channelMessagesFilterEmpty{},
+		},
+		resp,
+	}
+	x := <-resp
+	updateDifference := new(ChannelUpdateDifference)
+	switch u := x.(type) {
+	case TL_updates_channelDifferenceEmpty:
+		updateDifference.Empty = true
+	case TL_updates_channelDifference:
+		updateDifference.Pts = u.Pts
+		updateDifference.Flags = u.Flags
+		updateDifference.NewMessages = []Message{}
+		for _, m := range u.New_messages {
+			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
+		}
+	case TL_updates_channelDifferenceTooLong:
+		updateDifference.TooLong = true
+	}
+	return updateDifference
 }
 
 func (m *MTProto) Upload_GetFile(in TL, offset, limit int32) []byte {
