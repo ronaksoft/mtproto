@@ -13,7 +13,31 @@ type Dialog struct {
 	UnreadCount    int32
 	NotifySettings interface{}
 }
+func NewDialog(input TL) (d *Dialog) {
+	d = new(Dialog)
+	if dialog, ok := input.(TL_dialog); ok {
+		switch pt := dialog.Peer.(type) {
+		case TL_peerChat:
+			d.Type = DIALOG_TYPE_CHAT
+			d.PeerID = pt.Chat_id
+		case TL_peerUser:
+			d.Type = DIALOG_TYPE_USER
+			d.PeerID = pt.User_id
+		case TL_peerChannel:
+			d.Type = DIALOG_TYPE_CHANNEL
+			d.PeerID = pt.Channel_id
+		default:
+			return nil
+		}
+		d.Pts = dialog.Pts
+		d.TopMessageID = dialog.Top_message
+		d.UnreadCount = dialog.Unread_count
 
+		return d
+	}
+	return nil
+
+}
 func (d *Dialog) GetInputPeer() TL {
 	switch d.Type {
 	case DIALOG_TYPE_CHAT:
