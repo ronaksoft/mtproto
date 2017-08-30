@@ -139,6 +139,8 @@ func NewMessageAction(in TL) (m *MessageAction) {
 	case TL_messageActionHistoryClear:
 		m.Type = MESSAGE_ACTION_HISTORY_CLEAN
 	case TL_messageActionPinMessage:
+	case TL_messageActionPhoneCall:
+		m.Type = MESSAGE_ACTION_PHONE_CALL
 	default:
 		fmt.Println("NewMessageAction::UnSupported Input Format", reflect.TypeOf(x).String())
 	}

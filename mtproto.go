@@ -57,10 +57,13 @@ type packetToSend struct {
 	resp chan TL
 }
 
-func NewMTProto(authkeyfile string, debug int32) (*MTProto, error) {
+func NewMTProto(authkeyfile, dcAddress string, debug int32) (*MTProto, error) {
 	var err error
 	m := new(MTProto)
 	__debug = debug
+	if dcAddress == "" {
+		dcAddress = "149.154.167.91:443"
+	}
 
 	m.f, err = os.OpenFile(authkeyfile, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
@@ -71,9 +74,7 @@ func NewMTProto(authkeyfile string, debug int32) (*MTProto, error) {
 	if err == nil {
 		m.encrypted = true
 	} else {
-		//m.addr = "149.154.167.50:443"
-		m.addr = "149.154.167.91:443"
-		//m.addr = "149.154.165.120:443"
+		m.addr = dcAddress
 		m.encrypted = false
 	}
 	rand.Seed(time.Now().UnixNano())
@@ -148,6 +149,7 @@ func (m *MTProto) Connect() error {
 		m.dclist = make(map[int32]string, 5)
 		for _, v := range x.(TL_config).Dc_options {
 			v := v.(TL_dcOption)
+
 			m.dclist[v.Id] = fmt.Sprintf("%s:%d", v.Ip_address, v.Port)
 		}
 	default:
@@ -160,6 +162,38 @@ func (m *MTProto) Connect() error {
 	return nil
 }
 
+func (m *MTProto) Disconnect() error {
+	var err error
+
+	// stop ping routine
+	m.stopPing <- struct{}{}
+	close(m.stopPing)
+
+	// stop send routine
+	m.stopSend <- struct{}{}
+	close(m.stopSend)
+
+	// stop read routine
+	m.stopRead <- struct{}{}
+	close(m.stopRead)
+
+	// close send queue
+	close(m.queueSend)
+
+	<-m.allDone
+	<-m.allDone
+
+	// close connection
+	err = m.conn.Close()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *MTProto) GetDcAddress (dcID int32) string {
+	return m.dclist[dcID]
+}
 func (m *MTProto) reconnect(newaddr string) error {
 	var err error
 

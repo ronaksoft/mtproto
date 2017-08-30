@@ -66,3 +66,82 @@ func (d *Dialog) GetInputPeer() TL {
 	}
 }
 
+
+func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetInputPeer TL) ([]Dialog, int) {
+	resp := make(chan TL, 1)
+	for {
+		m.queueSend <- packetToSend{
+			TL_messages_getDialogs{
+				Offset_id:   offsetID,
+				Offset_date: offsetDate,
+				Limit:       limit,
+				Offset_peer: offsetInputPeer,
+			},
+			resp,
+		}
+		x := <-resp
+		mMessages := make(map[int32]*Message)
+		mChats := make(map[int32]*Chat)
+		mUsers := make(map[int32]*User)
+		var dialogs []Dialog
+		switch d := x.(type) {
+		case TL_messages_dialogsSlice:
+			for _, v := range d.Messages {
+				m := NewMessage(v)
+				mMessages[m.ID] = m
+			}
+			for _, v := range d.Chats {
+				c := NewChat(v)
+				mChats[c.ID] = c
+			}
+			for _, v := range d.Users {
+				u := NewUser(v)
+				mUsers[u.ID] = u
+			}
+			for _, v := range d.Dialogs {
+				d := NewDialog(v)
+				d.TopMessage = mMessages[d.TopMessageID]
+				switch d.Type {
+				case DIALOG_TYPE_USER:
+					d.PeerAccessHash = mUsers[d.PeerID].AccessHash
+					d.User = mUsers[d.PeerID]
+				case DIALOG_TYPE_CHAT:
+					d.Chat = mChats[d.PeerID]
+				case DIALOG_TYPE_CHANNEL:
+					d.PeerAccessHash = mChats[d.PeerID].AccessHash
+					d.Chat = mChats[d.PeerID]
+				}
+				dialogs = append(dialogs, *d)
+			}
+			return dialogs, int(d.Count)
+		case TL_messages_dialogs:
+			for _, v := range d.Messages {
+				m := NewMessage(v)
+				mMessages[m.ID] = m
+			}
+			for _, v := range d.Chats {
+				c := NewChat(v)
+				mChats[c.ID] = c
+			}
+			for _, v := range d.Dialogs {
+				d := NewDialog(v)
+				d.TopMessage = mMessages[d.TopMessageID]
+				switch d.Type {
+				case DIALOG_TYPE_USER:
+					d.PeerAccessHash = mUsers[d.PeerID].AccessHash
+					d.User = mUsers[d.PeerID]
+				case DIALOG_TYPE_CHAT:
+					d.Chat = mChats[d.PeerID]
+				case DIALOG_TYPE_CHANNEL:
+					d.PeerAccessHash = mChats[d.PeerID].AccessHash
+					d.Chat = mChats[d.PeerID]
+				}
+				dialogs = append(dialogs, *d)
+			}
+			return dialogs, len(d.Chats)
+		default:
+			return []Dialog{}, 0
+		}
+	}
+
+}
