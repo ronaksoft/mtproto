@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+
 func (m *MTProto) Auth_SendCode(phonenumber string) (string, error) {
 	var authSentCode TL_auth_sentCode
 	flag := true
@@ -126,93 +127,6 @@ func (m *MTProto) Contacts_GetContacts(hash int32) ([]Contact, []User) {
 	return TContacts, TUsers
 }
 
-func (m *MTProto) Channels_GetParticipants(channel TL, offset, limit int32) []User {
-	resp := make(chan TL, 1)
-	m.queueSend <- packetToSend{
-		TL_channels_getParticipants{
-			Channel: channel,
-			Filter:  TL_channelParticipantsRecent{},
-			Offset:  offset,
-			Limit:   limit,
-		},
-		resp,
-	}
-	x := <-resp
-	users := make([]User, 0)
-	switch input := x.(type) {
-	case TL_channels_channelParticipants:
-		for _, u := range input.Users {
-			users = append(users, *NewUser(u))
-		}
-	case TL_rpc_error:
-		fmt.Println(input.error_code, input.error_message)
-	default:
-		fmt.Println(reflect.TypeOf(input).String())
-	}
-	return users
-}
-
-func (m *MTProto) Channels_GetChannels(in []TL) []Chat {
-	resp := make(chan TL, 1)
-	m.queueSend <- packetToSend{
-		TL_channels_getChannels{
-			Id: in,
-		},
-		resp,
-	}
-	x := <-resp
-	chats := make([]Chat, 0, len(in))
-	switch input := x.(type) {
-	case TL_messages_chats:
-		for _, ch := range input.Chats {
-			chats = append(chats, *NewChat(ch))
-		}
-		return chats
-	case TL_rpc_error:
-		fmt.Println(input.error_code, input.error_message)
-		return chats
-	default:
-		fmt.Println(reflect.TypeOf(input).String())
-		return chats
-	}
-}
-
-func (m *MTProto) Channels_GetMessages(channel TL, ids []int32) []Message {
-	resp := make(chan TL, 1)
-	m.queueSend <- packetToSend{
-		TL_channels_getMessages{
-			Channel: channel,
-			Id:      ids,
-		},
-		resp,
-	}
-	x := <-resp
-	messages := make([]Message, 0, len(ids))
-	switch input := x.(type) {
-	case TL_messages_messages:
-		for _, m := range input.Messages {
-			messages = append(messages, *NewMessage(m))
-		}
-		return messages
-	case TL_messages_messagesSlice:
-		for _, m := range input.Messages {
-			messages = append(messages, *NewMessage(m))
-		}
-		return messages
-	case TL_messages_channelMessages:
-		for _, m := range input.Messages {
-			messages = append(messages, *NewMessage(m))
-		}
-		return messages
-	case TL_rpc_error:
-		fmt.Println(input.error_code, input.error_message)
-		return messages
-	default:
-		fmt.Println(reflect.TypeOf(input).String())
-		return messages
-	}
-
-}
 
 func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetInputPeer TL) ([]Dialog, int) {
 	resp := make(chan TL, 1)
@@ -293,189 +207,6 @@ func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetI
 
 }
 
-func (m *MTProto) Messages_GetChats(chatIDs []int32) []Chat {
-	resp := make(chan TL, 1)
-	m.queueSend <- packetToSend{
-		TL_messages_getChats{
-			Id: chatIDs,
-		},
-		resp,
-	}
-	x := <-resp
-	chats := make([]Chat, 0, len(chatIDs))
-	switch input := x.(type) {
-	case TL_messages_chats:
-		for _, ch := range input.Chats {
-			chats = append(chats, *NewChat(ch))
-		}
-		return chats
-	case TL_rpc_error:
-		fmt.Println(input.error_code, input.error_message)
-		return chats
-	default:
-		fmt.Println(reflect.TypeOf(input).String())
-		return chats
-	}
-}
-
-func (m *MTProto) Messages_GetFullChat(chatID int32) *Chat {
-	resp := make(chan TL, 1)
-	m.queueSend <- packetToSend{
-		TL_messages_getFullChat{
-			Chat_id: chatID,
-		},
-		resp,
-	}
-	x := <-resp
-	chat := new(Chat)
-	switch input := x.(type) {
-	case TL_messages_chatFull:
-		chat = NewChat(input)
-	default:
-
-	}
-	return chat
-}
-
-func (m *MTProto) Messages_GetHistory(inputPeer TL, limit int32) ([]Message, int32) {
-	resp := make(chan TL, 1)
-	m.queueSend <- packetToSend{
-		TL_messages_getHistory{
-			Peer:  inputPeer,
-			Limit: limit,
-		},
-		resp,
-	}
-	x := <-resp
-	messages := make([]Message, 0, 20)
-	switch input := x.(type) {
-	case TL_messages_messages:
-		for _, msg := range input.Messages {
-			messages = append(messages, *NewMessage(msg))
-		}
-		return messages, int32(len(messages))
-	case TL_messages_messagesSlice:
-		for _, msg := range input.Messages {
-			messages = append(messages, *NewMessage(msg))
-		}
-		return messages, input.Count
-	case TL_messages_channelMessages:
-		for _, msg := range input.Messages {
-			messages = append(messages, *NewMessage(msg))
-		}
-		return messages, input.Count
-	case TL_rpc_error:
-		fmt.Println(input.error_message, input.error_code)
-		return messages, 0
-	default:
-		fmt.Println(reflect.TypeOf(input).String())
-		return messages, 0
-	}
-
-}
-
-func (m *MTProto) Updates_GetState() *UpdateState {
-	resp := make(chan TL, 1)
-	m.queueSend <- packetToSend{
-		TL_updates_getState{},
-		resp,
-	}
-	x := <-resp
-	switch x.(type) {
-	case TL_updates_state:
-		return NewUpdateState(x)
-	default:
-		log.Println(fmt.Sprintf("RPC: %#v", x))
-		return nil
-	}
-}
-
-func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference {
-	resp := make(chan TL, 1)
-	m.queueSend <- packetToSend{
-		TL_updates_getDifference{
-			Flags:           1,
-			Pts:             pts,
-			Pts_total_limit: 100,
-			Qts:             qts,
-			Date:            date,
-		},
-		resp,
-	}
-	x := <-resp
-	updateDifference := new(UpdateDifference)
-	switch  u := x.(type) {
-	case TL_updates_differenceEmpty:
-		updateDifference.IntermediateState.Date = 0
-		return updateDifference
-	case TL_updates_difference:
-		updateDifference.IsSlice = false
-		updateDifference.IntermediateState = *NewUpdateState(u.State)
-		for _, m := range u.New_messages {
-			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
-		}
-		for _, ch := range u.Chats {
-			updateDifference.Chats = append(updateDifference.Chats, *NewChat(ch))
-		}
-		for _, user := range u.Users {
-			updateDifference.Users = append(updateDifference.Users, *NewUser(user))
-		}
-		for _, update := range u.Other_updates {
-			updateDifference.OtherUpdates = append(updateDifference.OtherUpdates, *NewUpdate(update))
-		}
-		return updateDifference
-	case TL_updates_differenceSlice:
-		updateDifference.IsSlice = true
-		updateDifference.IntermediateState = *NewUpdateState(u.Intermediate_state)
-		for _, m := range u.New_messages {
-			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
-		}
-		for _, ch := range u.Chats {
-			updateDifference.Chats = append(updateDifference.Chats, *NewChat(ch))
-		}
-		for _, user := range u.Users {
-			updateDifference.Users = append(updateDifference.Users, *NewUser(user))
-		}
-		for _, update := range u.Other_updates {
-			updateDifference.OtherUpdates = append(updateDifference.OtherUpdates, *NewUpdate(update))
-		}
-
-		return updateDifference
-	case TL_updates_differenceTooLong:
-		updateDifference.IntermediateState.Pts = u.Pts
-		return updateDifference
-	default:
-		log.Println(fmt.Sprintf("RPC: %#v", x))
-		return updateDifference
-	}
-}
-
-func (m *MTProto) Updates_GetChannelDifference(inputChannel TL) *ChannelUpdateDifference {
-	resp := make(chan TL, 1)
-	m.queueSend <- packetToSend{
-		TL_updates_getChannelDifference{
-			Channel: inputChannel,
-			Filter:  TL_channelMessagesFilterEmpty{},
-		},
-		resp,
-	}
-	x := <-resp
-	updateDifference := new(ChannelUpdateDifference)
-	switch u := x.(type) {
-	case TL_updates_channelDifferenceEmpty:
-		updateDifference.Empty = true
-	case TL_updates_channelDifference:
-		updateDifference.Pts = u.Pts
-		updateDifference.Flags = u.Flags
-		updateDifference.NewMessages = []Message{}
-		for _, m := range u.New_messages {
-			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
-		}
-	case TL_updates_channelDifferenceTooLong:
-		updateDifference.TooLong = true
-	}
-	return updateDifference
-}
 
 func (m *MTProto) Upload_GetFile(in TL, offset, limit int32) []byte {
 	resp := make(chan TL, 1)
@@ -491,8 +222,51 @@ func (m *MTProto) Upload_GetFile(in TL, offset, limit int32) []byte {
 	switch f := x.(type) {
 	case TL_upload_file:
 		return f.Bytes
+	case TL_upload_fileCdnRedirect:
+
+	case TL_rpc_error:
+		if f.error_code == 303 {
+			// Migrate Code
+		}
 	default:
 		log.Println(reflect.TypeOf(f).String(), f)
 	}
 	return []byte{}
+}
+
+func (m *MTProto) Upload_GetCdnFile(fileToken []byte, offset, limit int32) []byte {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_upload_getCdnFile{
+			fileToken,
+			offset,
+			limit,
+		},
+		resp,
+	}
+	x := <-resp
+	switch f := x.(type) {
+	case TL_upload_cdnFileReuploadNeeded:
+		m.queueSend <- packetToSend{
+			TL_upload_reuploadCdnFile{
+				Request_token: f.Request_token,
+				File_token:    fileToken,
+			},
+			resp,
+		}
+		z := <-resp
+		switch reflect.TypeOf(z).Kind() {
+		case reflect.Slice:
+			s := reflect.ValueOf(z)
+			for i := 0; i < s.Len(); i++ {
+				//hash := s.Interface().(TL_cdnFileHash)
+				//TODO:: what to do now ?!!
+			}
+		}
+
+	case TL_upload_cdnFile:
+		return f.Bytes
+
+	}
+
 }

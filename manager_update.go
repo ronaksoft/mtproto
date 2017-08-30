@@ -1,6 +1,10 @@
 package mtproto
 
-import "reflect"
+import (
+	"reflect"
+	"log"
+	"fmt"
+)
 
 const (
 	UPDATE_TYPE_NEW_MESSAGE             string = "NewMessage"
@@ -39,7 +43,6 @@ type UpdateDifference struct {
 	Users             []User
 	IntermediateState UpdateState
 }
-
 type ChannelUpdateDifference struct {
 	Empty       bool
 	TooLong     bool
@@ -50,6 +53,8 @@ type ChannelUpdateDifference struct {
 	NewMessages []Message
 }
 
+// input :
+//	1. TL_updates_state
 func NewUpdateState(input TL) *UpdateState {
 	us := new(UpdateState)
 	switch in := input.(type) {
@@ -63,6 +68,9 @@ func NewUpdateState(input TL) *UpdateState {
 	return us
 }
 
+// input :
+//	1. TL_updateNewMessage
+//	2. TL_updateNewChannelMessage
 func NewUpdate(input TL) *Update {
 	update := new(Update)
 	switch u := input.(type) {
@@ -80,4 +88,107 @@ func NewUpdate(input TL) *Update {
 		update.Type = reflect.TypeOf(u).String()
 	}
 	return update
+}
+
+func (m *MTProto) Updates_GetState() *UpdateState {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_updates_getState{},
+		resp,
+	}
+	x := <-resp
+	switch x.(type) {
+	case TL_updates_state:
+		return NewUpdateState(x)
+	default:
+		log.Println(fmt.Sprintf("RPC: %#v", x))
+		return nil
+	}
+}
+
+func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_updates_getDifference{
+			Flags:           1,
+			Pts:             pts,
+			Pts_total_limit: 100,
+			Qts:             qts,
+			Date:            date,
+		},
+		resp,
+	}
+	x := <-resp
+	updateDifference := new(UpdateDifference)
+	switch  u := x.(type) {
+	case TL_updates_differenceEmpty:
+		updateDifference.IntermediateState.Date = 0
+		return updateDifference
+	case TL_updates_difference:
+		updateDifference.IsSlice = false
+		updateDifference.IntermediateState = *NewUpdateState(u.State)
+		for _, m := range u.New_messages {
+			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
+		}
+		for _, ch := range u.Chats {
+			updateDifference.Chats = append(updateDifference.Chats, *NewChat(ch))
+		}
+		for _, user := range u.Users {
+			updateDifference.Users = append(updateDifference.Users, *NewUser(user))
+		}
+		for _, update := range u.Other_updates {
+			updateDifference.OtherUpdates = append(updateDifference.OtherUpdates, *NewUpdate(update))
+		}
+		return updateDifference
+	case TL_updates_differenceSlice:
+		updateDifference.IsSlice = true
+		updateDifference.IntermediateState = *NewUpdateState(u.Intermediate_state)
+		for _, m := range u.New_messages {
+			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
+		}
+		for _, ch := range u.Chats {
+			updateDifference.Chats = append(updateDifference.Chats, *NewChat(ch))
+		}
+		for _, user := range u.Users {
+			updateDifference.Users = append(updateDifference.Users, *NewUser(user))
+		}
+		for _, update := range u.Other_updates {
+			updateDifference.OtherUpdates = append(updateDifference.OtherUpdates, *NewUpdate(update))
+		}
+
+		return updateDifference
+	case TL_updates_differenceTooLong:
+		updateDifference.IntermediateState.Pts = u.Pts
+		return updateDifference
+	default:
+		log.Println(fmt.Sprintf("RPC: %#v", x))
+		return updateDifference
+	}
+}
+
+func (m *MTProto) Updates_GetChannelDifference(inputChannel TL) *ChannelUpdateDifference {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_updates_getChannelDifference{
+			Channel: inputChannel,
+			Filter:  TL_channelMessagesFilterEmpty{},
+		},
+		resp,
+	}
+	x := <-resp
+	updateDifference := new(ChannelUpdateDifference)
+	switch u := x.(type) {
+	case TL_updates_channelDifferenceEmpty:
+		updateDifference.Empty = true
+	case TL_updates_channelDifference:
+		updateDifference.Pts = u.Pts
+		updateDifference.Flags = u.Flags
+		updateDifference.NewMessages = []Message{}
+		for _, m := range u.New_messages {
+			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
+		}
+	case TL_updates_channelDifferenceTooLong:
+		updateDifference.TooLong = true
+	}
+	return updateDifference
 }

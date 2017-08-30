@@ -10,15 +10,15 @@ import (
 	"sync"
 	"time"
 )
-const (
-	DEBUG_LEVEL_NETWORK = 0x01
-	DEBUG_LEVEL_NETWORK_DETAILS = 0x02
-	DEBUG_LEVEL_DECODE = 0x04
-	DEBUG_LEVEL_DECODE_DETAILS = 0x08
 
+const (
+	DEBUG_LEVEL_NETWORK         = 0x01
+	DEBUG_LEVEL_NETWORK_DETAILS = 0x02
+	DEBUG_LEVEL_DECODE          = 0x04
+	DEBUG_LEVEL_DECODE_DETAILS  = 0x08
 )
 const (
-	appId = 48841
+	appId   = 48841
 	appHash = "3151c01673d412c18c055f089128be50"
 )
 
@@ -26,22 +26,21 @@ var (
 	__debug int32
 )
 
-
 type MTProto struct {
-	addr         string
-	conn         *net.TCPConn
-	f            *os.File
-	queueSend    chan packetToSend
-	stopSend     chan struct{}
-	stopRead     chan struct{}
-	stopPing     chan struct{}
-	allDone      chan struct{}
+	addr      string
+	conn      *net.TCPConn
+	f         *os.File
+	queueSend chan packetToSend
+	stopSend  chan struct{}
+	stopRead  chan struct{}
+	stopPing  chan struct{}
+	allDone   chan struct{}
 
-	authKey      []byte
-	authKeyHash  []byte
-	serverSalt   []byte
-	encrypted    bool
-	sessionId    int64
+	authKey     []byte
+	authKeyHash []byte
+	serverSalt  []byte
+	encrypted   bool
+	sessionId   int64
 
 	mutex        *sync.Mutex
 	lastSeqNo    int32
@@ -50,7 +49,7 @@ type MTProto struct {
 	seqNo        int32
 	msgId        int64
 
-	dclist       map[int32]string
+	dclist map[int32]string
 }
 
 type packetToSend struct {
@@ -63,7 +62,7 @@ func NewMTProto(authkeyfile string, debug int32) (*MTProto, error) {
 	m := new(MTProto)
 	__debug = debug
 
-	m.f, err = os.OpenFile(authkeyfile, os.O_RDWR | os.O_CREATE, 0600)
+	m.f, err = os.OpenFile(authkeyfile, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		return nil, err
 	}
@@ -138,14 +137,12 @@ func (m *MTProto) Connect() error {
 				"en",
 				"",
 				"en",
-				TL_langpack_getLanguages{},
-				//TL_help_getConfig{},
+				TL_help_getConfig{},
 			},
 		},
 		resp,
 	}
 	x = <-resp
-	fmt.Println(x)
 	switch x.(type) {
 	case TL_config:
 		m.dclist = make(map[int32]string, 5)
@@ -154,7 +151,6 @@ func (m *MTProto) Connect() error {
 			m.dclist[v.Id] = fmt.Sprintf("%s:%d", v.Ip_address, v.Port)
 		}
 	default:
-		fmt.Println(x)
 		return fmt.Errorf("Got: %T", x)
 	}
 
@@ -214,8 +210,6 @@ func (m *MTProto) pingRoutine() {
 }
 
 func (m *MTProto) sendRoutine() {
-	//log.Println("Send routine started.")
-	//defer log.Println("Send routine finished.")
 	for x := range m.queueSend {
 		err := m.sendPacket(x.msg, x.resp)
 		if err != nil {
@@ -223,7 +217,6 @@ func (m *MTProto) sendRoutine() {
 			os.Exit(2)
 		}
 	}
-
 	m.allDone <- struct{}{}
 }
 
@@ -272,7 +265,7 @@ func (m *MTProto) process(msgId int64, seqNo int32, data interface{}) interface{
 		m.queueSend <- packetToSend{TL_pong{msgId, data.ping_id}, nil}
 
 	case TL_pong:
-	// (ignore)
+		// (ignore)
 
 	case TL_msgs_ack:
 		data := data.(TL_msgs_ack)
@@ -330,7 +323,7 @@ func (m *MTProto) saveData() (err error) {
 }
 
 func (m *MTProto) readData() (err error) {
-	b := make([]byte, 1024 * 4)
+	b := make([]byte, 1024*4)
 	n, err := m.f.ReadAt(b, 0)
 	if n <= 0 {
 		return errors.New("New session")

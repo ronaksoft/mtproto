@@ -71,6 +71,9 @@ func (ch *Chat) GetInputPeer() TL {
 	}
 }
 
+// input :
+//	1. TL_chatPhotoEmpty
+//	2. TL_chatPhoto
 func NewChatProfilePhoto(input TL) (photo *ChatProfilePhoto) {
 	photo = new(ChatProfilePhoto)
 	switch p := input.(type) {
@@ -96,6 +99,15 @@ func NewChatProfilePhoto(input TL) (photo *ChatProfilePhoto) {
 	}
 	return photo
 }
+
+// input:
+//	1. TL_chatEmpty
+//	2. TL_chatForbidden
+//	3. TL_chat
+//	4. TL_chatFull:
+//	5. TL_channelFull:
+//	6. TL_channelForbidden:
+//	7. TL_channel
 func NewChat(input TL) (chat *Chat) {
 	chat = new(Chat)
 	chat.Members = []ChatMember{}
@@ -125,7 +137,6 @@ func NewChat(input TL) (chat *Chat) {
 			chat.Members = append(chat.Members, ChatMember{m.User_id, m.Inviter_id, m.Date})
 		}
 	case TL_channelFull:
-
 	case TL_channelForbidden:
 		chat.flags = ch.Flags
 		chat.Type = CHAT_TYPE_CHANNEL_FORBIDDEN
@@ -147,5 +158,174 @@ func NewChat(input TL) (chat *Chat) {
 		return nil
 	}
 	return chat
+}
+
+func (m *MTProto) Channels_GetParticipants(channel TL, offset, limit int32) []User {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_channels_getParticipants{
+			Channel: channel,
+			Filter:  TL_channelParticipantsRecent{},
+			Offset:  offset,
+			Limit:   limit,
+		},
+		resp,
+	}
+	x := <-resp
+	users := make([]User, 0)
+	switch input := x.(type) {
+	case TL_channels_channelParticipants:
+		for _, u := range input.Users {
+			users = append(users, *NewUser(u))
+		}
+	case TL_rpc_error:
+		fmt.Println(input.error_code, input.error_message)
+	default:
+		fmt.Println(reflect.TypeOf(input).String())
+	}
+	return users
+}
+
+func (m *MTProto) Channels_GetChannels(in []TL) []Chat {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_channels_getChannels{
+			Id: in,
+		},
+		resp,
+	}
+	x := <-resp
+	chats := make([]Chat, 0, len(in))
+	switch input := x.(type) {
+	case TL_messages_chats:
+		for _, ch := range input.Chats {
+			chats = append(chats, *NewChat(ch))
+		}
+		return chats
+	case TL_rpc_error:
+		fmt.Println(input.error_code, input.error_message)
+		return chats
+	default:
+		fmt.Println(reflect.TypeOf(input).String())
+		return chats
+	}
+}
+
+func (m *MTProto) Channels_GetMessages(channel TL, ids []int32) []Message {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_channels_getMessages{
+			Channel: channel,
+			Id:      ids,
+		},
+		resp,
+	}
+	x := <-resp
+	messages := make([]Message, 0, len(ids))
+	switch input := x.(type) {
+	case TL_messages_messages:
+		for _, m := range input.Messages {
+			messages = append(messages, *NewMessage(m))
+		}
+		return messages
+	case TL_messages_messagesSlice:
+		for _, m := range input.Messages {
+			messages = append(messages, *NewMessage(m))
+		}
+		return messages
+	case TL_messages_channelMessages:
+		for _, m := range input.Messages {
+			messages = append(messages, *NewMessage(m))
+		}
+		return messages
+	case TL_rpc_error:
+		fmt.Println(input.error_code, input.error_message)
+		return messages
+	default:
+		fmt.Println(reflect.TypeOf(input).String())
+		return messages
+	}
 
 }
+
+func (m *MTProto) Messages_GetChats(chatIDs []int32) []Chat {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_messages_getChats{
+			Id: chatIDs,
+		},
+		resp,
+	}
+	x := <-resp
+	chats := make([]Chat, 0, len(chatIDs))
+	switch input := x.(type) {
+	case TL_messages_chats:
+		for _, ch := range input.Chats {
+			chats = append(chats, *NewChat(ch))
+		}
+		return chats
+	case TL_rpc_error:
+		fmt.Println(input.error_code, input.error_message)
+		return chats
+	default:
+		fmt.Println(reflect.TypeOf(input).String())
+		return chats
+	}
+}
+
+func (m *MTProto) Messages_GetFullChat(chatID int32) *Chat {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_messages_getFullChat{
+			Chat_id: chatID,
+		},
+		resp,
+	}
+	x := <-resp
+	chat := new(Chat)
+	switch input := x.(type) {
+	case TL_messages_chatFull:
+		chat = NewChat(input)
+	default:
+
+	}
+	return chat
+}
+
+func (m *MTProto) Messages_GetHistory(inputPeer TL, limit int32) ([]Message, int32) {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_messages_getHistory{
+			Peer:  inputPeer,
+			Limit: limit,
+		},
+		resp,
+	}
+	x := <-resp
+	messages := make([]Message, 0, 20)
+	switch input := x.(type) {
+	case TL_messages_messages:
+		for _, msg := range input.Messages {
+			messages = append(messages, *NewMessage(msg))
+		}
+		return messages, int32(len(messages))
+	case TL_messages_messagesSlice:
+		for _, msg := range input.Messages {
+			messages = append(messages, *NewMessage(msg))
+		}
+		return messages, input.Count
+	case TL_messages_channelMessages:
+		for _, msg := range input.Messages {
+			messages = append(messages, *NewMessage(msg))
+		}
+		return messages, input.Count
+	case TL_rpc_error:
+		fmt.Println(input.error_message, input.error_code)
+		return messages, 0
+	default:
+		fmt.Println(reflect.TypeOf(input).String())
+		return messages, 0
+	}
+
+}
+
