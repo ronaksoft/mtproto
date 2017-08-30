@@ -3,7 +3,6 @@ package mtproto
 import (
 	"fmt"
 	"reflect"
-	"log"
 )
 
 type Message struct {

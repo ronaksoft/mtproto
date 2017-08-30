@@ -13,6 +13,9 @@ type Dialog struct {
 	UnreadCount    int32
 	NotifySettings interface{}
 }
+
+// NewDialog returns a pointer to Dialog struct
+// input :		TL_dialog
 func NewDialog(input TL) (d *Dialog) {
 	d = new(Dialog)
 	if dialog, ok := input.(TL_dialog); ok {
@@ -38,6 +41,11 @@ func NewDialog(input TL) (d *Dialog) {
 	return nil
 
 }
+
+// GetInputPeer returns either of the struct below:
+//	1. TL_inputPeerChat
+//	2. TL_inputPeerChannel
+//	3. TL_inputPeerUser
 func (d *Dialog) GetInputPeer() TL {
 	switch d.Type {
 	case DIALOG_TYPE_CHAT:

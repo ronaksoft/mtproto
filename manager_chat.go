@@ -19,9 +19,9 @@ type ChatProfilePhoto struct {
 }
 type Chat struct {
 	flags        int32
+	Type         string
 	ID           int32
 	Username     string
-	Type         string
 	Title        string
 	Photo        *ChatProfilePhoto
 	Participants int32
