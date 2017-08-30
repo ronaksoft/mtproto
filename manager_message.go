@@ -6,18 +6,6 @@ import (
 	"log"
 )
 
-
-type MessageAction struct {
-	Type      string
-	Title     string
-	ChatID    int32
-	ChannelID int32
-	GameID    int64
-	GameScore int32
-	UserID    int32
-	UserIDs   []int32
-	Photo     *Photo
-}
 type Message struct {
 	flags         int32
 	Type          string
@@ -29,8 +17,28 @@ type Message struct {
 	MediaType     string
 	Action        *MessageAction
 	ForwardHeader *MessageForwardHeader
+	Entities      []MessageEntity
 	Views         int32
 	Media         interface{}
+}
+type MessageAction struct {
+	Type      string
+	Title     string
+	ChatID    int32
+	ChannelID int32
+	GameID    int64
+	GameScore int32
+	UserID    int32
+	UserIDs   []int32
+	Photo     *Photo
+}
+type MessageEntity struct {
+	Type     string
+	Offset   int32
+	Length   int32
+	Url      string
+	language string
+	UserID   int32
 }
 type MessageForwardHeader struct {
 	From        int32
@@ -54,38 +62,40 @@ type MessageMediaDocument struct {
 	Document Document
 }
 
-func NewMessageMedia(in TL) (interface{}) {
+func NewMessage(in TL) (m *Message) {
+	m = new(Message)
 	switch x := in.(type) {
-	case TL_messageMediaPhoto:
-		mm := new(MessageMediaPhoto)
-		mm.Caption = x.Caption
-		mm.Photo = *NewPhoto(x.Photo)
-		return mm
-	case TL_messageMediaContact:
-		mm := new(MessageMediaContact)
-		mm.UserID = x.User_id
-		mm.Firstname = x.First_name
-		mm.Lastname = x.Last_name
-		mm.Phone = x.Phone_number
-		return mm
-	case TL_messageMediaDocument:
-		mm := new(MessageMediaDocument)
-		mm.Caption = x.Caption
-		mm.Document = *NewDocument(x.Document)
-		return mm
+	case TL_message:
+		m.flags = x.Flags
+		m.Type = MESSAGE_TYPE_NORMAL
+		m.ID = x.Id
+		m.Date = x.Date
+		m.From = x.From_id
+		m.Body = x.Message
+		m.To = NewPeer(x.To_id)
+		m.Views = x.Views
+		if x.Media != nil {
+			m.Media = NewMessageMedia(x.Media)
+		}
+		if x.Fwd_from != nil {
+			m.ForwardHeader = NewMessageForwardHeader(x.Fwd_from)
+		}
+		m.Entities = make([]MessageEntity, 0, 0)
+		for _, e := range x.Entities{
+			m.Entities = append(m.Entities, *NewMessageEntity(e))
+		}
+	case TL_messageService:
+		m.flags = x.Flags
+		m.Type = MESSAGE_TYPE_SERVICE
+		m.ID = x.Id
+		m.Date = x.Date
+		m.From = x.From_id
+		m.To = NewPeer(x.To_id)
+		m.Action = NewMessageAction(x.Action)
+		m.ForwardHeader = new(MessageForwardHeader)
 	default:
-		log.Println("NewMessageMedia::", reflect.TypeOf(x).String())
+		fmt.Println("NewMessage::UnSupported Input Format", reflect.TypeOf(x).String())
 	}
-	return nil
-}
-
-func NewMessageForwardHeader(in TL) (fwd *MessageForwardHeader) {
-	fwd = new(MessageForwardHeader)
-	fwdHeader := in.(TL_messageFwdHeader)
-	fwd.Date = fwdHeader.Date
-	fwd.From = fwdHeader.From_id
-	fwd.ChannelID = fwdHeader.Channel_id
-	fwd.ChannelPost = fwdHeader.Channel_post
 	return
 }
 func NewMessageAction(in TL) (m *MessageAction) {
@@ -131,39 +141,84 @@ func NewMessageAction(in TL) (m *MessageAction) {
 		m.Type = MESSAGE_ACTION_HISTORY_CLEAN
 	case TL_messageActionPinMessage:
 	default:
-		return nil
+		fmt.Println("NewMessageAction::UnSupported Input Format", reflect.TypeOf(x).String())
 	}
 	return
 }
-func NewMessage(in TL) (m *Message) {
-	m = new(Message)
+func NewMessageEntity(in TL) (e *MessageEntity) {
+	e = new(MessageEntity)
 	switch x := in.(type) {
-	case TL_message:
-		m.flags = x.Flags
-		m.Type = MESSAGE_TYPE_NORMAL
-		m.ID = x.Id
-		m.Date = x.Date
-		m.From = x.From_id
-		m.Body = x.Message
-		m.To = NewPeer(x.To_id)
-		m.Views = x.Views
-		if x.Media != nil {
-			m.Media = NewMessageMedia(x.Media)
-		}
-		if x.Fwd_from != nil {
-			m.ForwardHeader = NewMessageForwardHeader(x.Fwd_from)
-		}
-	case TL_messageService:
-		m.flags = x.Flags
-		m.Type = MESSAGE_TYPE_SERVICE
-		m.ID = x.Id
-		m.Date = x.Date
-		m.From = x.From_id
-		m.To = NewPeer(x.To_id)
-		m.Action = NewMessageAction(x.Action)
-		m.ForwardHeader = new(MessageForwardHeader)
+	case TL_messageEntityBold:
+		e.Type = MESSAGE_ENTITY_BOLD
+		e.Offset, e.Length = x.Offset, x.Length
+	case TL_messageEntityEmail:
+		e.Type = MESSAGE_ENTITY_EMAIL
+		e.Offset, e.Length = x.Offset, x.Length
+	case TL_messageEntityBotCommand:
+		e.Type = MESSAGE_ENTITY_BOT_COMMAND
+		e.Offset, e.Length = x.Offset, x.Length
+	case TL_messageEntityHashtag:
+		e.Type = MESSAGE_ENTITY_HASHTAG
+		e.Offset, e.Length = x.Offset, x.Length
+	case TL_messageEntityCode:
+		e.Type = MESSAGE_ENTITY_CODE
+		e.Offset, e.Length = x.Offset, x.Length
+	case TL_messageEntityItalic:
+		e.Type = MESSAGE_ENTITY_ITALIC
+		e.Offset, e.Length = x.Offset, x.Length
+	case TL_messageEntityMention:
+		e.Type = MESSAGE_ENTITY_MENTION
+		e.Offset, e.Length = x.Offset, x.Length
+	case TL_messageEntityUrl:
+		e.Type = MESSAGE_ENTITY_URL
+		e.Offset, e.Length = x.Offset, x.Length
+	case TL_messageEntityTextUrl:
+		e.Type = MESSAGE_ENTITY_TEXT_URL
+		e.Offset, e.Length = x.Offset, x.Length
+		e.Url = x.Url
+	case TL_messageEntityPre:
+		e.Type = MESSAGE_ENTITY_PRE
+		e.Offset, e.Length = x.Offset, x.Length
+		e.language = x.Language
+	case TL_messageEntityMentionName:
+		e.Type = MESSAGE_ENTITY_MENTION_NAME
+		e.Offset, e.Length = x.Offset, x.Length
+		e.UserID = x.User_id
 	default:
-		fmt.Println("GER", reflect.TypeOf(x).String())
+		fmt.Println("NewMessageEntity::UnSupported Input Format", reflect.TypeOf(x).String())
 	}
+	return e
+}
+func NewMessageForwardHeader(in TL) (fwd *MessageForwardHeader) {
+	fwd = new(MessageForwardHeader)
+	fwdHeader := in.(TL_messageFwdHeader)
+	fwd.Date = fwdHeader.Date
+	fwd.From = fwdHeader.From_id
+	fwd.ChannelID = fwdHeader.Channel_id
+	fwd.ChannelPost = fwdHeader.Channel_post
 	return
+}
+func NewMessageMedia(in TL) (interface{}) {
+	switch x := in.(type) {
+	case TL_messageMediaPhoto:
+		mm := new(MessageMediaPhoto)
+		mm.Caption = x.Caption
+		mm.Photo = *NewPhoto(x.Photo)
+		return mm
+	case TL_messageMediaContact:
+		mm := new(MessageMediaContact)
+		mm.UserID = x.User_id
+		mm.Firstname = x.First_name
+		mm.Lastname = x.Last_name
+		mm.Phone = x.Phone_number
+		return mm
+	case TL_messageMediaDocument:
+		mm := new(MessageMediaDocument)
+		mm.Caption = x.Caption
+		mm.Document = *NewDocument(x.Document)
+		return mm
+	default:
+		fmt.Println("NewMessageMedia::UnSupported Input Format", reflect.TypeOf(x).String())
+	}
+	return nil
 }
