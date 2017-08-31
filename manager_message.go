@@ -61,9 +61,12 @@ type MessageMediaDocument struct {
 	Document Document
 }
 
-func NewMessage(in TL) (m *Message) {
+// input
+//	1. TL_message
+//	2. TL_messageService
+func NewMessage(input TL) (m *Message) {
 	m = new(Message)
-	switch x := in.(type) {
+	switch x := input.(type) {
 	case TL_message:
 		m.flags = x.Flags
 		m.Type = MESSAGE_TYPE_NORMAL
@@ -80,7 +83,7 @@ func NewMessage(in TL) (m *Message) {
 			m.ForwardHeader = NewMessageForwardHeader(x.Fwd_from)
 		}
 		m.Entities = make([]MessageEntity, 0, 0)
-		for _, e := range x.Entities{
+		for _, e := range x.Entities {
 			m.Entities = append(m.Entities, *NewMessageEntity(e))
 		}
 	case TL_messageService:
@@ -97,9 +100,26 @@ func NewMessage(in TL) (m *Message) {
 	}
 	return
 }
-func NewMessageAction(in TL) (m *MessageAction) {
+
+// input:
+//	1. TL_messageActionEmpty
+//	2. TL_messageActionChannelCreate
+//	3. TL_messageActionChannelMigrateFrom
+//	4. TL_messageActionChatCreate
+//	5. TL_messageActionChatAddUser
+//	6. TL_messageActionChatDeleteUser
+//	7. TL_messageActionChatDeleteUser
+//	8. TL_messageActionChatEditPhoto
+//	9. TL_messageActionChatEditTitle
+//	10. TL_messageActionChatJoinedByLink
+//	11.	TL_messageActionChatMigrateTo
+//	12.	TL_messageActionGameScore
+//	13. TL_messageActionHistoryClear
+//	14. TL_messageActionPinMessage
+//	15. TL_messageActionPhoneCall
+func NewMessageAction(input TL) (m *MessageAction) {
 	m = new(MessageAction)
-	switch x := in.(type) {
+	switch x := input.(type) {
 	case TL_messageActionEmpty:
 	case TL_messageActionChannelCreate:
 		m.Type = MESSAGE_ACTION_CHANNEL_CREATED
@@ -146,6 +166,7 @@ func NewMessageAction(in TL) (m *MessageAction) {
 	}
 	return
 }
+
 func NewMessageEntity(in TL) (e *MessageEntity) {
 	e = new(MessageEntity)
 	switch x := in.(type) {
@@ -199,8 +220,13 @@ func NewMessageForwardHeader(in TL) (fwd *MessageForwardHeader) {
 	fwd.ChannelPost = fwdHeader.Channel_post
 	return
 }
-func NewMessageMedia(in TL) (interface{}) {
-	switch x := in.(type) {
+
+// input:
+//	1. TL_messageMediaPhoto
+//	2. TL_messageMediaContact
+//	3. TL_messageMediaDocument
+func NewMessageMedia(input TL) (interface{}) {
+	switch x := input.(type) {
 	case TL_messageMediaPhoto:
 		mm := new(MessageMediaPhoto)
 		mm.Caption = x.Caption
