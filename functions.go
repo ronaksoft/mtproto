@@ -2,7 +2,6 @@ package mtproto
 
 import (
 	"fmt"
-	"log"
 	"github.com/pkg/errors"
 )
 
@@ -93,38 +92,6 @@ func (m *MTProto) Auth_CheckPhone(phonenumber string) bool {
 	return false
 }
 
-func (m *MTProto) Contacts_GetContacts(hash int32) ([]Contact, []User) {
-	resp := make(chan TL, 1)
-	m.queueSend <- packetToSend{TL_contacts_getContacts{
-		hash},
-		resp,
-	}
-	x := <-resp
-	list, ok := x.(TL_contacts_contacts)
-	if !ok {
-		log.Println(fmt.Sprintf("RPC: %#v", x))
-		return []Contact{}, []User{}
-	}
-	TContacts := make([]Contact, 0, len(list.Contacts))
-	TUsers := make([]User, 0, len(list.Users))
-	for _, v := range list.Contacts {
-		TContacts = append(
-			TContacts,
-			*NewContact(v),
-		)
-	}
-	for _, v := range list.Users {
-		switch u := v.(type) {
-		case TL_user, TL_userEmpty:
-			TUsers = append(TUsers, *NewUser(u))
-		case TL_userProfilePhoto:
-			TUsers[len(TUsers)-1].Photo = NewUserProfilePhoto(u)
-		case TL_userStatusRecently, TL_userStatusOffline, TL_userStatusOnline, TL_userStatusLastWeek, TL_userStatusLastMonth:
-			TUsers[len(TUsers)-1].Status = NewUserStatus(u)
-		}
-	}
-	return TContacts, TUsers
-}
 
 
 

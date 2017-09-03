@@ -12,6 +12,7 @@ const (
 	DIALOG_TYPE_CHANNEL = "CHANNEL"
 )
 
+// User related constants
 const (
 	USER_STATUS_OFFLINE    = "OFFLINE"
 	USER_STATUS_ONLINE     = "ONLINE"
@@ -20,6 +21,7 @@ const (
 	USER_STATUS_LAST_MONTH = "LAST_MONTH"
 )
 
+// Message Related Constants
 const (
 	// Message Types
 	MESSAGE_TYPE_EMPTY     = "EMPTY"
@@ -66,6 +68,10 @@ const (
 	MESSAGE_MEDIA_TYPE_AUDIO    = "AUDIO"
 )
 
-const ()
+const (
+	CONTACT_TYPE_IMPORTED = "IMPORTED"
+	CONTACT_TYPE_POPULAR  = "POPULAR"
+	CONTACT_TYPE_PHONE    = "PHONE"
+)
 
 const ()

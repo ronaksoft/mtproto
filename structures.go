@@ -91,23 +91,6 @@ func (p *PhotoSize) GetInputFileLocation() TL_inputFileLocation {
 	}
 }
 
-// Contact
-type Contact struct {
-	UserID int32
-	Mutual bool
-}
-func NewContact(in TL) (contact *Contact) {
-	contact = new(Contact)
-	switch c := in.(type) {
-	case TL_contact:
-		contact.UserID = c.User_id
-		contact.Mutual = toBool(c.Mutual)
-	default:
-		log.Println("GetContact::Error::Invalid Type")
-		return nil
-	}
-	return
-}
 
 // Document
 type Document struct {

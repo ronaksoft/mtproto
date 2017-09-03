@@ -101,7 +101,6 @@ func (m *MTProto) Connect() error {
 		return err
 	}
 
-	fmt.Println("Connect: ", m.addr, m.encrypted)
 	// get new authKey if need
 	if !m.encrypted {
 		err = m.makeAuthKey()

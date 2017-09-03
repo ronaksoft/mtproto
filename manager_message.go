@@ -167,9 +167,9 @@ func NewMessageAction(input TL) (m *MessageAction) {
 	return
 }
 
-func NewMessageEntity(in TL) (e *MessageEntity) {
+func NewMessageEntity(input TL) (e *MessageEntity) {
 	e = new(MessageEntity)
-	switch x := in.(type) {
+	switch x := input.(type) {
 	case TL_messageEntityBold:
 		e.Type = MESSAGE_ENTITY_BOLD
 		e.Offset, e.Length = x.Offset, x.Length
@@ -211,9 +211,10 @@ func NewMessageEntity(in TL) (e *MessageEntity) {
 	}
 	return e
 }
-func NewMessageForwardHeader(in TL) (fwd *MessageForwardHeader) {
+
+func NewMessageForwardHeader(input TL) (fwd *MessageForwardHeader) {
 	fwd = new(MessageForwardHeader)
-	fwdHeader := in.(TL_messageFwdHeader)
+	fwdHeader := input.(TL_messageFwdHeader)
 	fwd.Date = fwdHeader.Date
 	fwd.From = fwdHeader.From_id
 	fwd.ChannelID = fwdHeader.Channel_id
