@@ -186,9 +186,14 @@ func (m *MTProto) Updates_GetChannelDifference(inputChannel TL, pts, limit int32
 	switch u := x.(type) {
 	case TL_updates_channelDifferenceEmpty:
 		updateDifference.Empty = true
+		updateDifference.Pts = u.Pts
+		updateDifference.Flags = u.Flags
+		updateDifference.Timeout = u.Timeout
+
 	case TL_updates_channelDifference:
 		updateDifference.Pts = u.Pts
 		updateDifference.Flags = u.Flags
+		updateDifference.Timeout = u.Timeout
 		updateDifference.NewMessages = []Message{}
 		updateDifference.OtherUpdates = []Update{}
 		for _, m := range u.New_messages {
@@ -201,6 +206,7 @@ func (m *MTProto) Updates_GetChannelDifference(inputChannel TL, pts, limit int32
 		updateDifference.TooLong = true
 		updateDifference.Pts = u.Pts
 		updateDifference.Flags = u.Flags
+		updateDifference.Timeout = u.Timeout
 		updateDifference.NewMessages = []Message{}
 		updateDifference.OtherUpdates = []Update{}
 		for _, m := range u.Messages {
