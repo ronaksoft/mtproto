@@ -189,6 +189,8 @@ func (m *MTProto) Updates_GetChannelDifference(inputChannel TL) *ChannelUpdateDi
 		}
 	case TL_updates_channelDifferenceTooLong:
 		updateDifference.TooLong = true
+	case TL_rpc_error:
+		log.Println("Update_GetChannelDiffrence::", u.error_code, u.error_message)
 	}
 	return updateDifference
 }
