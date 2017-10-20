@@ -43,7 +43,7 @@ func (ch *Channel) GetPeer() TL {
 }
 func (ch *Channel) GetInputPeer() TL {
 	return TL_inputPeerChannel{
-		Channel_id: ch.ID,
+		Channel_id:  ch.ID,
 		Access_hash: ch.AccessHash,
 	}
 }
@@ -211,10 +211,10 @@ func NewChannel(input TL) *Channel {
 		channel.Date = ch.Date
 		channel.RestrictionReason = ch.Restriction_reason
 		channel.Flags.loadFlags(ch.Flags)
-		if channel.Flags.AdminRightsSet {
+		if channel.Flags.AdminRightsSet && ch.Admin_rights != nil {
 			channel.AdminRights.loadFlags(ch.Admin_rights.(TL_channelAdminRights).Flags)
 		}
-		if channel.Flags.BannedRightsSet {
+		if channel.Flags.BannedRightsSet && ch.Banned_rights != nil {
 			channel.BannedRights.UntilDate = ch.Banned_rights.(TL_channelBannedRights).Until_date
 			channel.BannedRights.loadFlags(ch.Banned_rights.(TL_channelBannedRights).Flags)
 		}
@@ -281,7 +281,7 @@ func (m *MTProto) Channels_GetFullChannel(channelID int32, accessHash int64) *Ch
 	m.queueSend <- packetToSend{
 		TL_channels_getFullChannel{
 			Channel: TL_inputChannel{
-				Channel_id: channelID,
+				Channel_id:  channelID,
 				Access_hash: accessHash,
 			},
 		},
