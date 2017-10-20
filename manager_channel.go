@@ -275,3 +275,25 @@ func (m *MTProto) Channels_GetChannels(in []TL) []Channel {
 		return channels
 	}
 }
+
+func (m *MTProto) Channels_GetFullChannel(channelID int32, accessHash int64) *Channel {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_channels_getFullChannel{
+			Channel: TL_inputChannel{
+				Channel_id: channelID,
+				Access_hash: accessHash,
+			},
+		},
+		resp,
+	}
+	x := <-resp
+	channel := new(Channel)
+	switch input := x.(type) {
+	case TL_messages_chatFull:
+		channel = NewChannel(input.Chats[0])
+	default:
+		return nil
+	}
+	return channel
+}
