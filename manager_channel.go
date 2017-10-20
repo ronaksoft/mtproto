@@ -30,10 +30,11 @@ type Channel struct {
 	Counters          ChannelCounters
 }
 type ChannelCounters struct {
-	Admins int32
-	Kicked int32
-	Banned int32
-	Unread int32
+	Admins       int32
+	Kicked       int32
+	Banned       int32
+	Unread       int32
+	Participants int32
 }
 
 func (ch *Channel) GetPeer() TL {
@@ -199,6 +200,7 @@ func NewChannel(input TL) *Channel {
 		channel.Counters.Banned = ch.Banned_count
 		channel.Counters.Kicked = ch.Kicked_count
 		channel.Counters.Unread = ch.Unread_count
+		channel.Counters.Participants = ch.Participants_count
 		channel.Flags.loadFlags(ch.Flags)
 	case TL_channelForbidden:
 		channel._State = CHANNEL_DATA_EMPTY
