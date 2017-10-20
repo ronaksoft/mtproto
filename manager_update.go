@@ -53,6 +53,7 @@ type ChannelUpdateDifference struct {
 	NewMessages []Message
 }
 
+// NewUpdateState
 // input :
 //	1. TL_updates_state
 func NewUpdateState(input TL) *UpdateState {
@@ -68,6 +69,7 @@ func NewUpdateState(input TL) *UpdateState {
 	return us
 }
 
+// NewUpdate
 // input :
 //	1. TL_updateNewMessage
 //	2. TL_updateNewChannelMessage
@@ -166,12 +168,14 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 	}
 }
 
-func (m *MTProto) Updates_GetChannelDifference(inputChannel TL) *ChannelUpdateDifference {
+func (m *MTProto) Updates_GetChannelDifference(inputChannel TL, pts, limit int32) *ChannelUpdateDifference {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_updates_getChannelDifference{
 			Channel: inputChannel,
 			Filter:  TL_channelMessagesFilterEmpty{},
+			Pts: pts,
+			Limit: limit,
 		},
 		resp,
 	}
