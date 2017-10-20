@@ -1,6 +1,5 @@
 package mtproto
 
-
 type Dialog struct {
 	Type           string
 	Pts            int32
@@ -9,6 +8,7 @@ type Dialog struct {
 	TopMessageID   int32
 	TopMessage     *Message
 	Chat           *Chat
+	Channel        *Channel
 	User           *User
 	UnreadCount    int32
 	NotifySettings interface{}
@@ -66,7 +66,6 @@ func (d *Dialog) GetInputPeer() TL {
 	}
 }
 
-
 func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetInputPeer TL) ([]Dialog, int) {
 	resp := make(chan TL, 1)
 	for {
@@ -82,23 +81,30 @@ func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetI
 		x := <-resp
 		mMessages := make(map[int32]*Message)
 		mChats := make(map[int32]*Chat)
+		mChannels := make(map[int32]*Channel)
 		mUsers := make(map[int32]*User)
 		var dialogs []Dialog
-		switch d := x.(type) {
+		switch input := x.(type) {
 		case TL_messages_dialogsSlice:
-			for _, v := range d.Messages {
+			for _, v := range input.Messages {
 				m := NewMessage(v)
 				mMessages[m.ID] = m
 			}
-			for _, v := range d.Chats {
-				c := NewChat(v)
-				mChats[c.ID] = c
+			for _, v := range input.Chats {
+				switch v.(type) {
+				case TL_chatEmpty, TL_chat, TL_chatFull, TL_chatForbidden:
+					c := NewChat(v)
+					mChats[c.ID] = c
+				case TL_channel, TL_channelFull, TL_channelForbidden:
+					c := NewChannel(v)
+					mChannels[c.ID] = c
+				}
 			}
-			for _, v := range d.Users {
+			for _, v := range input.Users {
 				u := NewUser(v)
 				mUsers[u.ID] = u
 			}
-			for _, v := range d.Dialogs {
+			for _, v := range input.Dialogs {
 				d := NewDialog(v)
 				d.TopMessage = mMessages[d.TopMessageID]
 				switch d.Type {
@@ -108,22 +114,32 @@ func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetI
 				case DIALOG_TYPE_CHAT:
 					d.Chat = mChats[d.PeerID]
 				case DIALOG_TYPE_CHANNEL:
-					d.PeerAccessHash = mChats[d.PeerID].AccessHash
-					d.Chat = mChats[d.PeerID]
+					d.PeerAccessHash = mChannels[d.PeerID].AccessHash
+					d.Channel = mChannels[d.PeerID]
 				}
 				dialogs = append(dialogs, *d)
 			}
-			return dialogs, int(d.Count)
+			return dialogs, int(input.Count)
 		case TL_messages_dialogs:
-			for _, v := range d.Messages {
+			for _, v := range input.Messages {
 				m := NewMessage(v)
 				mMessages[m.ID] = m
 			}
-			for _, v := range d.Chats {
-				c := NewChat(v)
-				mChats[c.ID] = c
+			for _, v := range input.Chats {
+				switch v.(type) {
+				case TL_chatEmpty, TL_chat, TL_chatFull, TL_chatForbidden:
+					c := NewChat(v)
+					mChats[c.ID] = c
+				case TL_channel, TL_channelFull, TL_channelForbidden:
+					c := NewChannel(v)
+					mChannels[c.ID] = c
+				}
 			}
-			for _, v := range d.Dialogs {
+			for _, v := range input.Users {
+				u := NewUser(v)
+				mUsers[u.ID] = u
+			}
+			for _, v := range input.Dialogs {
 				d := NewDialog(v)
 				d.TopMessage = mMessages[d.TopMessageID]
 				switch d.Type {
@@ -133,12 +149,12 @@ func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetI
 				case DIALOG_TYPE_CHAT:
 					d.Chat = mChats[d.PeerID]
 				case DIALOG_TYPE_CHANNEL:
-					d.PeerAccessHash = mChats[d.PeerID].AccessHash
-					d.Chat = mChats[d.PeerID]
+					d.PeerAccessHash = mChannels[d.PeerID].AccessHash
+					d.Channel = mChannels[d.PeerID]
 				}
 				dialogs = append(dialogs, *d)
 			}
-			return dialogs, len(d.Chats)
+			return dialogs, len(input.Chats)
 		default:
 			return []Dialog{}, 0
 		}
