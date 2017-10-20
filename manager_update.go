@@ -40,8 +40,10 @@ type UpdateDifference struct {
 	NewMessages       []Message
 	OtherUpdates      []Update
 	Chats             []Chat
+	Channels          []Channel
 	Users             []User
 	IntermediateState UpdateState
+	Seq 				int32
 }
 type ChannelUpdateDifference struct {
 	Empty        bool
@@ -127,6 +129,7 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 	switch  u := x.(type) {
 	case TL_updates_differenceEmpty:
 		updateDifference.IntermediateState.Date = 0
+		updateDifference.IntermediateState.Seq = u.Seq
 		return updateDifference
 	case TL_updates_difference:
 		updateDifference.IsSlice = false
@@ -135,7 +138,13 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
 		}
 		for _, ch := range u.Chats {
-			updateDifference.Chats = append(updateDifference.Chats, *NewChat(ch))
+			switch ch.(type) {
+			case TL_chatFull, TL_chat, TL_chatForbidden, TL_chatEmpty:
+				updateDifference.Chats = append(updateDifference.Chats, *NewChat(ch))
+			case TL_channel, TL_channelForbidden, TL_channelFull:
+				updateDifference.Channels = append(updateDifference.Channels, *NewChannel(ch))
+			}
+
 		}
 		for _, user := range u.Users {
 			updateDifference.Users = append(updateDifference.Users, *NewUser(user))
@@ -151,7 +160,13 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
 		}
 		for _, ch := range u.Chats {
-			updateDifference.Chats = append(updateDifference.Chats, *NewChat(ch))
+			switch ch.(type) {
+			case TL_chatFull, TL_chat, TL_chatForbidden, TL_chatEmpty:
+				updateDifference.Chats = append(updateDifference.Chats, *NewChat(ch))
+			case TL_channel, TL_channelForbidden, TL_channelFull:
+				updateDifference.Channels = append(updateDifference.Channels, *NewChannel(ch))
+			}
+
 		}
 		for _, user := range u.Users {
 			updateDifference.Users = append(updateDifference.Users, *NewUser(user))
