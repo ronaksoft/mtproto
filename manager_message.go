@@ -44,6 +44,7 @@ type MessageForwardHeader struct {
 	Date        int32
 	ChannelID   int32
 	ChannelPost int32
+	Author      string
 }
 type MessageMedia interface{}
 type MessageMediaPhoto struct {
@@ -219,6 +220,7 @@ func NewMessageForwardHeader(input TL) (fwd *MessageForwardHeader) {
 	fwd.From = fwdHeader.From_id
 	fwd.ChannelID = fwdHeader.Channel_id
 	fwd.ChannelPost = fwdHeader.Channel_post
+	fwd.Author = fwdHeader.Post_author
 	return
 }
 
@@ -226,7 +228,7 @@ func NewMessageForwardHeader(input TL) (fwd *MessageForwardHeader) {
 //	1. TL_messageMediaPhoto
 //	2. TL_messageMediaContact
 //	3. TL_messageMediaDocument
-func NewMessageMedia(input TL) (interface{}) {
+func NewMessageMedia(input TL) interface{} {
 	switch x := input.(type) {
 	case TL_messageMediaPhoto:
 		mm := new(MessageMediaPhoto)

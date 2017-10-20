@@ -9,8 +9,6 @@ const (
 	CHAT_TYPE_EMPTY             = "EMPTY"
 	CHAT_TYPE_CHAT              = "CHAT"
 	CHAT_TYPE_CHAT_FORBIDDEN    = "CHAT_FORBIDDEN"
-	CHAT_TYPE_CHANNEL           = "CHANNEL"
-	CHAT_TYPE_CHANNEL_FORBIDDEN = "CHANNEL_FORBIDDEN"
 )
 
 type ChatProfilePhoto struct {
@@ -47,10 +45,6 @@ func (ch *Chat) GetPeer() TL {
 		return TL_peerChat{
 			Chat_id: ch.ID,
 		}
-	case CHAT_TYPE_CHANNEL, CHAT_TYPE_CHANNEL_FORBIDDEN:
-		return TL_peerChannel{
-			Channel_id: ch.ID,
-		}
 	default:
 		return nil
 	}
@@ -60,11 +54,6 @@ func (ch *Chat) GetInputPeer() TL {
 	case CHAT_TYPE_CHAT, CHAT_TYPE_CHAT_FORBIDDEN:
 		return TL_inputPeerChat{
 			Chat_id: ch.ID,
-		}
-	case CHAT_TYPE_CHANNEL, CHAT_TYPE_CHANNEL_FORBIDDEN:
-		return TL_inputPeerChannel{
-			Channel_id:  ch.ID,
-			Access_hash: ch.AccessHash,
 		}
 	default:
 		return nil
@@ -105,9 +94,6 @@ func NewChatProfilePhoto(input TL) (photo *ChatProfilePhoto) {
 //	2. TL_chatForbidden
 //	3. TL_chat
 //	4. TL_chatFull:
-//	5. TL_channelFull:
-//	6. TL_channelForbidden:
-//	7. TL_channel
 func NewChat(input TL) (chat *Chat) {
 	chat = new(Chat)
 	chat.Members = []ChatMember{}
@@ -136,79 +122,11 @@ func NewChat(input TL) (chat *Chat) {
 			m := tl.(TL_chatParticipant)
 			chat.Members = append(chat.Members, ChatMember{m.User_id, m.Inviter_id, m.Date})
 		}
-	case TL_channelFull:
-	case TL_channelForbidden:
-		chat.flags = ch.Flags
-		chat.Type = CHAT_TYPE_CHANNEL_FORBIDDEN
-		chat.ID = ch.Id
-		chat.Title = ch.Title
-		chat.AccessHash = ch.Access_hash
-	case TL_channel:
-		chat.flags = ch.Flags
-		chat.Type = CHAT_TYPE_CHANNEL
-		chat.ID = ch.Id
-		chat.Username = ch.Username
-		chat.Title = ch.Title
-		chat.Date = ch.Date
-		chat.Photo = NewChatProfilePhoto(ch.Photo)
-		chat.Version = ch.Version
-		chat.AccessHash = ch.Access_hash
 	default:
 		fmt.Println(reflect.TypeOf(ch).String())
 		return nil
 	}
 	return chat
-}
-
-func (m *MTProto) Channels_GetParticipants(channel TL, offset, limit int32) []User {
-	resp := make(chan TL, 1)
-	m.queueSend <- packetToSend{
-		TL_channels_getParticipants{
-			Channel: channel,
-			Filter:  TL_channelParticipantsRecent{},
-			Offset:  offset,
-			Limit:   limit,
-		},
-		resp,
-	}
-	x := <-resp
-	users := make([]User, 0)
-	switch input := x.(type) {
-	case TL_channels_channelParticipants:
-		for _, u := range input.Users {
-			users = append(users, *NewUser(u))
-		}
-	case TL_rpc_error:
-		fmt.Println(input.error_code, input.error_message)
-	default:
-		fmt.Println(reflect.TypeOf(input).String())
-	}
-	return users
-}
-
-func (m *MTProto) Channels_GetChannels(in []TL) []Chat {
-	resp := make(chan TL, 1)
-	m.queueSend <- packetToSend{
-		TL_channels_getChannels{
-			Id: in,
-		},
-		resp,
-	}
-	x := <-resp
-	chats := make([]Chat, 0, len(in))
-	switch input := x.(type) {
-	case TL_messages_chats:
-		for _, ch := range input.Chats {
-			chats = append(chats, *NewChat(ch))
-		}
-		return chats
-	case TL_rpc_error:
-		fmt.Println(input.error_code, input.error_message)
-		return chats
-	default:
-		fmt.Println(reflect.TypeOf(input).String())
-		return chats
-	}
 }
 
 func (m *MTProto) Channels_GetMessages(channel TL, ids []int32) []Message {

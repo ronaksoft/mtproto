@@ -7,20 +7,20 @@ import (
 
 // Contact
 type Contact struct {
-	ClientID 	int64
-	Firstname 	string
-	Lastname		string
-	Phone 		string
-	UserID int32
-	Mutual bool
+	ClientID  int64
+	Firstname string
+	Lastname  string
+	Phone     string
+	UserID    int32
+	Mutual    bool
 }
 
 func (c *Contact) GetInputContact() TL {
 	return TL_inputPhoneContact{
-		Client_id: c.ClientID,
+		Client_id:  c.ClientID,
 		First_name: c.Firstname,
-		Last_name: c.Lastname,
-		Phone: c.Phone,
+		Last_name:  c.Lastname,
+		Phone:      c.Phone,
 	}
 }
 
