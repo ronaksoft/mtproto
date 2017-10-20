@@ -6,7 +6,7 @@ import (
 )
 
 type Message struct {
-	flags         int32
+	Flags         MessageFlags
 	Type          string
 	ID            int32
 	From          int32
@@ -20,6 +20,32 @@ type Message struct {
 	Views         int32
 	Media         interface{}
 }
+type MessageFlags struct {
+	Out         bool // flags_1?true
+	Mentioned   bool // flags_4?true
+	MediaUnread bool // flags_5?true
+	Silent      bool // flags_13?true
+	Post        bool // flags_14?true
+}
+
+func (f *MessageFlags) loadFlags(flags int32) {
+	if flags&1<<1 != 0 {
+		f.Out = true
+	}
+	if flags&1<<4 != 0 {
+		f.Mentioned = true
+	}
+	if flags&1<<5 != 0 {
+		f.MediaUnread = true
+	}
+	if flags&1<<13 != 0 {
+		f.Silent = true
+	}
+	if flags&1<<14 != 0 {
+		f.Post = true
+	}
+}
+
 type MessageAction struct {
 	Type      string
 	Title     string
@@ -69,7 +95,7 @@ func NewMessage(input TL) (m *Message) {
 	m = new(Message)
 	switch x := input.(type) {
 	case TL_message:
-		m.flags = x.Flags
+		m.Flags.loadFlags(x.Flags)
 		m.Type = MESSAGE_TYPE_NORMAL
 		m.ID = x.Id
 		m.Date = x.Date
@@ -88,7 +114,7 @@ func NewMessage(input TL) (m *Message) {
 			m.Entities = append(m.Entities, *NewMessageEntity(e))
 		}
 	case TL_messageService:
-		m.flags = x.Flags
+		m.Flags.loadFlags(x.Flags)
 		m.Type = MESSAGE_TYPE_SERVICE
 		m.ID = x.Id
 		m.Date = x.Date
