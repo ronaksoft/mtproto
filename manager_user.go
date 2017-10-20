@@ -11,7 +11,7 @@ type UserProfilePhoto struct {
 	PhotoLarge FileLocation
 }
 type User struct {
-	flags                int32
+	Flags                UserFlags
 	ID                   int32
 	Username             string
 	FirstName            string
@@ -28,38 +28,58 @@ type User struct {
 	BotInlinePlaceHolser string
 	RestrictionReason    string
 }
-func (user *User) IsSelf() bool {
-	if user.flags&1<<10 != 0 {
-		return true
-	}
-	return false
+type UserFlags struct {
+	Self           bool // flags_10?true
+	Contact        bool // flags_11?true
+	MutualContact  bool // flags_12?true
+	Deleted        bool // flags_13?true
+	Bot            bool // flags_14?true
+	BotChatHistory bool // flags_15?true
+	BotNochats     bool // flags_16?true
+	Verified       bool // flags_17?true
+	Restricted     bool // flags_18?true
+	Min            bool // flags_20?true
+	BotInlineGeo   bool // flags_21?true
 }
-func (user *User) IsContact() bool {
-	if user.flags&1<<11 != 0 {
-		return true
+
+func (f *UserFlags) loadFlags(flags int32) {
+	if flags&1<<10 != 0 {
+		f.Self = true
 	}
-	return false
-}
-func (user *User) IsMutualContact() bool {
-	if user.flags&1<<12 != 0 {
-		return true
+	if flags&1<<11 != 0 {
+		f.Contact = true
 	}
-	return false
-}
-func (user *User) IsDeleted() bool {
-	if user.flags&1<<13 != 0 {
-		return true
+	if flags&1<<12 != 0 {
+		f.MutualContact = true
 	}
-	return false
-}
-func (user *User) IsBot() bool {
-	if user.flags&1<<14 != 0 {
-		return true
+	if flags&1<<13 != 0 {
+		f.Deleted = true
 	}
-	return false
+	if flags&1<<14 != 0 {
+		f.Bot = true
+	}
+	if flags&1<<15 != 0 {
+		f.BotChatHistory = true
+	}
+	if flags&1<<16 != 0 {
+		f.BotNochats = true
+	}
+	if flags&1<<17 != 0 {
+		f.Verified = true
+	}
+	if flags&1<<18 != 0 {
+		f.Restricted = true
+	}
+	if flags&1<<20 != 0 {
+		f.Min = true
+	}
+	if flags&1<<21 != 0 {
+		f.BotInlineGeo = true
+	}
 }
+
 func (user *User) GetInputPeer() TL {
-	if user.IsSelf() {
+	if user.Flags.Self {
 		return TL_inputPeerSelf{}
 	} else {
 		return TL_inputPeerUser{}

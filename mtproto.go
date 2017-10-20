@@ -148,7 +148,6 @@ func (m *MTProto) Connect() error {
 		m.dclist = make(map[int32]string, 5)
 		for _, v := range x.(TL_config).Dc_options {
 			v := v.(TL_dcOption)
-
 			m.dclist[v.Id] = fmt.Sprintf("%s:%d", v.Ip_address, v.Port)
 		}
 	default:
@@ -193,6 +192,7 @@ func (m *MTProto) Disconnect() error {
 func (m *MTProto) GetDcAddress (dcID int32) string {
 	return m.dclist[dcID]
 }
+
 func (m *MTProto) reconnect(newaddr string) error {
 	var err error
 
