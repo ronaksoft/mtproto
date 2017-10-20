@@ -44,13 +44,14 @@ type UpdateDifference struct {
 	IntermediateState UpdateState
 }
 type ChannelUpdateDifference struct {
-	Empty       bool
-	TooLong     bool
-	Flags       int32
-	Final       bool
-	Pts         int32
-	Timeout     int32
-	NewMessages []Message
+	Empty        bool
+	TooLong      bool
+	Flags        int32
+	Final        bool
+	Pts          int32
+	Timeout      int32
+	NewMessages  []Message
+	OtherUpdates []Update
 }
 
 // NewUpdateState
@@ -88,6 +89,7 @@ func NewUpdate(input TL) *Update {
 		update.Pts = u.Pts
 	default:
 		update.Type = reflect.TypeOf(u).String()
+		log.Println("NewUpdate::UnSupported Updated::", update.Type)
 	}
 	return update
 }
@@ -174,8 +176,8 @@ func (m *MTProto) Updates_GetChannelDifference(inputChannel TL, pts, limit int32
 		TL_updates_getChannelDifference{
 			Channel: inputChannel,
 			Filter:  TL_channelMessagesFilterEmpty{},
-			Pts: pts,
-			Limit: limit,
+			Pts:     pts,
+			Limit:   limit,
 		},
 		resp,
 	}
@@ -188,11 +190,22 @@ func (m *MTProto) Updates_GetChannelDifference(inputChannel TL, pts, limit int32
 		updateDifference.Pts = u.Pts
 		updateDifference.Flags = u.Flags
 		updateDifference.NewMessages = []Message{}
+		updateDifference.OtherUpdates = []Update{}
 		for _, m := range u.New_messages {
 			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
 		}
+		for _, u := range u.Other_updates {
+			updateDifference.OtherUpdates = append(updateDifference.OtherUpdates, *NewUpdate(u))
+		}
 	case TL_updates_channelDifferenceTooLong:
 		updateDifference.TooLong = true
+		updateDifference.Pts = u.Pts
+		updateDifference.Flags = u.Flags
+		updateDifference.NewMessages = []Message{}
+		updateDifference.OtherUpdates = []Update{}
+		for _, m := range u.Messages {
+			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
+		}
 	case TL_rpc_error:
 		log.Println("Update_GetChannelDiffrence::", u.error_code, u.error_message)
 	}
