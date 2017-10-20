@@ -9,6 +9,8 @@ import (
 const (
 	UPDATE_TYPE_NEW_MESSAGE             string = "NewMessage"
 	UPDATE_TYPE_CHANNEL_NEW_MESSAGE     string = "ChannelNewMessage"
+	UPDATE_TYPE_READ_CHANNEL_INBOX      string = "ReadChannelInbox"
+	UPDATE_TYPE_CHANNEL_TOO_LONG        string = "ChannelTooLong"
 	UPDATE_TYPE_USER_TYPING             string = "UserTyping"
 	UPDATE_TYPE_CHAT_PARTICIPANT_ADD    string = "ChatParticipantAdd"
 	UPDATE_TYPE_CHAT_PARTICIPANT_ADMIN  string = "ChatParticipantAdmin"
@@ -26,6 +28,9 @@ type Update struct {
 	Message   *Message
 	Version   int32
 	Date      int32
+	ChannelID int32
+	MaxID     int32
+	Flags     int32
 }
 type UpdateState struct {
 	Qts          int32
@@ -43,7 +48,7 @@ type UpdateDifference struct {
 	Channels          []Channel
 	Users             []User
 	IntermediateState UpdateState
-	Seq 				int32
+	Seq               int32
 }
 type ChannelUpdateDifference struct {
 	Empty        bool
@@ -89,6 +94,15 @@ func NewUpdate(input TL) *Update {
 		update.Message = NewMessage(u.Message)
 		update.PtsCount = u.Pts_count
 		update.Pts = u.Pts
+	case TL_updateReadChannelInbox:
+		update.Type = UPDATE_TYPE_READ_CHANNEL_INBOX
+		update.ChannelID = u.Channel_id
+		update.MaxID = u.Max_id
+	case TL_updateChannelTooLong:
+		update.Type = UPDATE_TYPE_CHANNEL_TOO_LONG
+		update.Pts = u.Pts
+		update.ChannelID = u.Channel_id
+		update.Flags = u.Flags
 	default:
 		update.Type = reflect.TypeOf(u).String()
 		log.Println("NewUpdate::UnSupported Updated::", update.Type)
