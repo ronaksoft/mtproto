@@ -88,6 +88,7 @@ type MessageMediaDocument struct {
 	Document Document
 }
 
+// NewMessage
 // input
 //	1. TL_message
 //	2. TL_messageService
@@ -128,6 +129,7 @@ func NewMessage(input TL) (m *Message) {
 	return
 }
 
+// NewMessageAction
 // input:
 //	1. TL_messageActionEmpty
 //	2. TL_messageActionChannelCreate
@@ -250,10 +252,12 @@ func NewMessageForwardHeader(input TL) (fwd *MessageForwardHeader) {
 	return
 }
 
+// NewMessageMedia
 // input:
 //	1. TL_messageMediaPhoto
 //	2. TL_messageMediaContact
 //	3. TL_messageMediaDocument
+//
 func NewMessageMedia(input TL) interface{} {
 	switch x := input.(type) {
 	case TL_messageMediaPhoto:
@@ -273,6 +277,8 @@ func NewMessageMedia(input TL) interface{} {
 		mm.Caption = x.Caption
 		mm.Document = *NewDocument(x.Document)
 		return mm
+	case TL_messageMediaWebPage:
+		// TODO:: implement it
 	default:
 		fmt.Println("NewMessageMedia::UnSupported Input Format", reflect.TypeOf(x).String())
 	}

@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"sync"
 	"time"
+	"log"
+	"reflect"
 )
 
 const (
@@ -320,7 +322,6 @@ func (m *MTProto) process(msgId int64, seqNo int32, data interface{}) interface{
 		}
 		delete(m.msgsIdToAck, data.req_msg_id)
 		m.mutex.Unlock()
-
 	default:
 		return data
 
