@@ -109,6 +109,10 @@ func NewUpdate(input TL) *Update {
 		update.Pts = u.Pts
 		update.PtsCount = u.Pts_count
 		update.MaxID = u.Max_id
+	case TL_updateUserPhoto:
+		update.UserID = u.User_id
+		update.Date = u.Date
+		// Save NewUserProfilePhoto(u.Photo)
 	default:
 		update.Type = reflect.TypeOf(u).String()
 		log.Println("NewUpdate::UnSupported Updated::", update.Type)
