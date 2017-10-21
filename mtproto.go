@@ -9,8 +9,6 @@ import (
 	"runtime"
 	"sync"
 	"time"
-	"log"
-	"reflect"
 )
 
 const (
