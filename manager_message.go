@@ -3,6 +3,8 @@ package mtproto
 import (
 	"fmt"
 	"reflect"
+	"log"
+	"math/rand"
 )
 
 type Message struct {
@@ -87,7 +89,9 @@ type MessageMediaDocument struct {
 	Caption  string
 	Document Document
 }
+type MessageReplyMarkup struct {
 
+}
 // NewMessage
 // input
 //	1. TL_message
@@ -283,4 +287,29 @@ func NewMessageMedia(input TL) interface{} {
 		fmt.Println("NewMessageMedia::UnSupported Input Format", reflect.TypeOf(x).String())
 	}
 	return nil
+}
+
+
+func (m *MTProto) Messages_SendMessage(text string, peer TL, reply_to int32) {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_messages_sendMessage{
+			0,
+			peer,
+			reply_to,
+			text,
+			rand.Int63(),
+			nil,
+			nil,
+		},
+		resp,
+	}
+	x := <-resp
+	switch r := x.(type) {
+	default:
+		log.Println(reflect.TypeOf(r))
+		return
+
+	}
+
 }

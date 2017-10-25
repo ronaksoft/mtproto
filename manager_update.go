@@ -12,6 +12,7 @@ const (
 	UPDATE_TYPE_READ_CHANNEL_INBOX      string = "ReadChannelInbox"
 	UPDATE_TYPE_CHANNEL_TOO_LONG        string = "ChannelTooLong"
 	UPDATE_TYPE_READ_HISTORY_INBOX      string = "ReadHistoryInbox"
+	UPDATE_TYPE_USER_PHOTO			  string = "UserPhoto"
 	UPDATE_TYPE_USER_TYPING             string = "UserTyping"
 	UPDATE_TYPE_CHAT_PARTICIPANT_ADD    string = "ChatParticipantAdd"
 	UPDATE_TYPE_CHAT_PARTICIPANT_ADMIN  string = "ChatParticipantAdmin"
@@ -110,9 +111,13 @@ func NewUpdate(input TL) *Update {
 		update.PtsCount = u.Pts_count
 		update.MaxID = u.Max_id
 	case TL_updateUserPhoto:
+		update.Type = UPDATE_TYPE_USER_PHOTO
 		update.UserID = u.User_id
 		update.Date = u.Date
 		// Save NewUserProfilePhoto(u.Photo)
+	case TL_updateContactLink:
+		update.UserID = u.User_id
+
 	default:
 		update.Type = reflect.TypeOf(u).String()
 		log.Println("NewUpdate::UnSupported Updated::", update.Type)
