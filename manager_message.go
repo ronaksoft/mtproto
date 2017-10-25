@@ -334,3 +334,14 @@ func (m *MTProto) Messages_ImportChatInvite(hash string) *Chat {
 	}
 	return nil
 }
+
+//func (m *MTProto) Messages_CheckInvite(hash string) {
+//	resp := make(chan TL, 1)
+//	m.queueSend <- packetToSend{
+//		TL_messages_checkChatInvite{
+//			hash,
+//		},
+//		resp,
+//	}
+//	//x := <-resp
+//}
