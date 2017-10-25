@@ -313,3 +313,24 @@ func (m *MTProto) Messages_SendMessage(text string, peer TL, reply_to int32) {
 	}
 
 }
+
+func (m *MTProto) Messages_ImportChatInvite(hash string) *Chat {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_messages_importChatInvite{
+			hash,
+		},
+		resp,
+	}
+	x := <-resp
+	switch r := x.(type) {
+	case TL_updates:
+		chat := NewChat(r.Chats[0])
+		return chat
+	case TL_rpc_error:
+		log.Println(r.error_code, r.error_message)
+	default:
+		log.Println(reflect.TypeOf(r))
+	}
+	return nil
+}

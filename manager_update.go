@@ -206,7 +206,9 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 
 		return updateDifference
 	case TL_updates_differenceTooLong:
+		log.Println("UpdateTooLong")
 		updateDifference.IntermediateState.Pts = u.Pts
+
 		return updateDifference
 	default:
 		log.Println(fmt.Sprintf("RPC: %#v", x))

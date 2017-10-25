@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"sync"
 	"time"
+	"strings"
+	"log"
 )
 
 const (
@@ -86,13 +88,28 @@ func NewMTProto(authkeyfile, dcAddress string, debug int32) (*MTProto, error) {
 func (m *MTProto) Connect() error {
 	var err error
 	var tcpAddr *net.TCPAddr
-
 	// connect
-	tcpAddr, err = net.ResolveTCPAddr("tcp", m.addr)
-	if err != nil {
-		return err
+	if strings.Count(m.addr, ":") <= 1 {
+		log.Println("IPv4")
+		tcpAddr, err = net.ResolveTCPAddr("tcp", m.addr)
+		if err != nil {
+			log.Println("IPv4::", err.Error())
+			return err
+		}
+		m.conn, err = net.DialTCP("tcp", nil, tcpAddr)
+	} else {
+		log.Println("IPv6")
+		idx := strings.LastIndex(m.addr, ":")
+		m.addr = fmt.Sprintf("[%s]:%s", m.addr[:idx], m.addr[idx+1:])
+		log.Println(m.addr)
+		tcpAddr, err = net.ResolveTCPAddr("tcp6", m.addr)
+		if err != nil {
+			log.Println("IPv6::", err.Error())
+			return err
+		}
+
+		m.conn, err = net.DialTCP("tcp6", nil, tcpAddr)
 	}
-	m.conn, err = net.DialTCP("tcp", nil, tcpAddr)
 	if err != nil {
 		return err
 	}

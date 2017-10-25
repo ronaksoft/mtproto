@@ -60,6 +60,7 @@ func (ch *Chat) GetInputPeer() TL {
 	}
 }
 
+// NewChatProfilePhoto
 // input :
 //	1. TL_chatPhotoEmpty
 //	2. TL_chatPhoto
@@ -89,6 +90,7 @@ func NewChatProfilePhoto(input TL) (photo *ChatProfilePhoto) {
 	return photo
 }
 
+// NewChat
 // input:
 //	1. TL_chatEmpty
 //	2. TL_chatForbidden

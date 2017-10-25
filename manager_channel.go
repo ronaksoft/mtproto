@@ -299,3 +299,26 @@ func (m *MTProto) Channels_GetFullChannel(channelID int32, accessHash int64) *Ch
 	}
 	return channel
 }
+
+func (m *MTProto) Channels_JoinChannel(channelID int32, accessHash int64) {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_channels_joinChannel{
+			Channel: TL_inputChannel{
+				Channel_id:  channelID,
+				Access_hash: accessHash,
+			},
+		},
+		resp,
+	}
+	x := <-resp
+	//channel := new(Channel)
+	switch input := x.(type) {
+	case TL_rpc_error:
+		log.Println(input.error_message, input.error_code)
+	default:
+
+		 log.Println(reflect.TypeOf(input))
+	}
+	return
+}
