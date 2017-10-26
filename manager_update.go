@@ -7,17 +7,17 @@ import (
 )
 
 const (
-	UPDATE_TYPE_NEW_MESSAGE             string = "NewMessage"
-	UPDATE_TYPE_CHANNEL_NEW_MESSAGE     string = "ChannelNewMessage"
-	UPDATE_TYPE_READ_CHANNEL_INBOX      string = "ReadChannelInbox"
-	UPDATE_TYPE_CHANNEL_TOO_LONG        string = "ChannelTooLong"
-	UPDATE_TYPE_READ_HISTORY_INBOX      string = "ReadHistoryInbox"
-	UPDATE_TYPE_USER_PHOTO              string = "UserPhoto"
-	UPDATE_TYPE_USER_TYPING             string = "UserTyping"
-	UPDATE_TYPE_CHAT_PARTICIPANT_ADD    string = "ChatParticipantAdd"
-	UPDATE_TYPE_CHAT_PARTICIPANT_ADMIN  string = "ChatParticipantAdmin"
-	UPDATE_TYPE_CHAT_PARTICIPANT_DELETE string = "ChatParticipantDelete"
-	UPDATE_TYPE_CHAT_USER_TYPING        string = "ChatUserTyping"
+	//UPDATE_TYPE_NEW_MESSAGE             string = "NewMessage"
+	//UPDATE_TYPE_CHANNEL_NEW_MESSAGE     string = "ChannelNewMessage"
+	//UPDATE_TYPE_READ_CHANNEL_INBOX      string = "ReadChannelInbox"
+	//UPDATE_TYPE_CHANNEL_TOO_LONG        string = "ChannelTooLong"
+	//UPDATE_TYPE_READ_HISTORY_INBOX      string = "ReadHistoryInbox"
+	//UPDATE_TYPE_USER_PHOTO              string = "UserPhoto"
+	//UPDATE_TYPE_USER_TYPING             string = "UserTyping"
+	//UPDATE_TYPE_CHAT_PARTICIPANT_ADD    string = "ChatParticipantAdd"
+	//UPDATE_TYPE_CHAT_PARTICIPANT_ADMIN  string = "ChatParticipantAdmin"
+	//UPDATE_TYPE_CHAT_PARTICIPANT_DELETE string = "ChatParticipantDelete"
+	//UPDATE_TYPE_CHAT_USER_TYPING        string = "ChatUserTyping"
 )
 
 const (
@@ -92,45 +92,43 @@ func NewUpdateState(input TL) *UpdateState {
 //	2. TL_updateNewChannelMessage
 func NewUpdate(input TL) *Update {
 	update := new(Update)
+	update.Type = reflect.TypeOf(input).String()
 	switch u := input.(type) {
 	case TL_updateNewMessage:
-		update.Type = UPDATE_TYPE_NEW_MESSAGE
 		update.Pts = u.Pts
 		update.PtsCount = u.Pts_count
 		update.Message = NewMessage(u.Message)
 	case TL_updateNewChannelMessage:
-		update.Type = UPDATE_TYPE_CHANNEL_NEW_MESSAGE
 		update.Message = NewMessage(u.Message)
 		update.PtsCount = u.Pts_count
 		update.Pts = u.Pts
 	case TL_updateReadChannelInbox:
-		update.Type = UPDATE_TYPE_READ_CHANNEL_INBOX
 		update.ChannelID = u.Channel_id
 		update.MaxID = u.Max_id
 	case TL_updateChannelTooLong:
-		update.Type = UPDATE_TYPE_CHANNEL_TOO_LONG
 		update.Pts = u.Pts
 		update.ChannelID = u.Channel_id
 		update.Flags = u.Flags
 	case TL_updateReadHistoryInbox:
-		update.Type = UPDATE_TYPE_READ_HISTORY_INBOX
 		update.Pts = u.Pts
 		update.PtsCount = u.Pts_count
 		update.MaxID = u.Max_id
 	case TL_updateUserPhoto:
-		update.Type = UPDATE_TYPE_USER_PHOTO
 		update.UserID = u.User_id
 		update.Date = u.Date
 		// Save NewUserProfilePhoto(u.Photo)
 	case TL_updateContactLink:
 		update.UserID = u.User_id
 	case TL_updateEditChannelMessage:
+		update.Pts = u.Pts
+		update.PtsCount = u.Pts_count
 		update.Message = NewMessage(u.Message)
 	case TL_updateEditMessage:
+		update.Pts = u.Pts
+		update.PtsCount = u.Pts_count
 		update.Message = NewMessage(u.Message)
 	default:
 		update.Type = reflect.TypeOf(u).String()
-		log.Println("NewUpdate::UnSupported Updated::", update.Type)
 	}
 	return update
 }
