@@ -12,12 +12,18 @@ const (
 	UPDATE_TYPE_READ_CHANNEL_INBOX      string = "ReadChannelInbox"
 	UPDATE_TYPE_CHANNEL_TOO_LONG        string = "ChannelTooLong"
 	UPDATE_TYPE_READ_HISTORY_INBOX      string = "ReadHistoryInbox"
-	UPDATE_TYPE_USER_PHOTO			  string = "UserPhoto"
+	UPDATE_TYPE_USER_PHOTO              string = "UserPhoto"
 	UPDATE_TYPE_USER_TYPING             string = "UserTyping"
 	UPDATE_TYPE_CHAT_PARTICIPANT_ADD    string = "ChatParticipantAdd"
 	UPDATE_TYPE_CHAT_PARTICIPANT_ADMIN  string = "ChatParticipantAdmin"
 	UPDATE_TYPE_CHAT_PARTICIPANT_DELETE string = "ChatParticipantDelete"
 	UPDATE_TYPE_CHAT_USER_TYPING        string = "ChatUserTyping"
+)
+
+const (
+	UPDATE_DIFFERENCE_EMPTY    = "EMPTY"
+	UPDATE_DIFFERENCE_SLICE    = "SLICE"
+	UPDATE_DIFFERENCE_TOO_LONG = "TOO_LONG"
 )
 
 type Update struct {
@@ -42,6 +48,7 @@ type UpdateState struct {
 	UnreadCounts int32
 }
 type UpdateDifference struct {
+	Type              string
 	IsSlice           bool
 	Total             int32
 	NewMessages       []Message
@@ -117,7 +124,10 @@ func NewUpdate(input TL) *Update {
 		// Save NewUserProfilePhoto(u.Photo)
 	case TL_updateContactLink:
 		update.UserID = u.User_id
-
+	case TL_updateEditChannelMessage:
+		update.Message = NewMessage(u.Message)
+	case TL_updateEditMessage:
+		update.Message = NewMessage(u.Message)
 	default:
 		update.Type = reflect.TypeOf(u).String()
 		log.Println("NewUpdate::UnSupported Updated::", update.Type)
@@ -157,6 +167,7 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 	updateDifference := new(UpdateDifference)
 	switch  u := x.(type) {
 	case TL_updates_differenceEmpty:
+		updateDifference.Type = UPDATE_DIFFERENCE_EMPTY
 		updateDifference.IsSlice = false
 		updateDifference.IntermediateState.Date = u.Date
 		updateDifference.IntermediateState.Seq = u.Seq
@@ -184,6 +195,7 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 		}
 		return updateDifference
 	case TL_updates_differenceSlice:
+		updateDifference.Type = UPDATE_DIFFERENCE_SLICE
 		updateDifference.IsSlice = true
 		updateDifference.IntermediateState = *NewUpdateState(u.Intermediate_state)
 		for _, m := range u.New_messages {
@@ -207,7 +219,7 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 
 		return updateDifference
 	case TL_updates_differenceTooLong:
-		log.Println("UpdateTooLong")
+		updateDifference.Type = UPDATE_DIFFERENCE_TOO_LONG
 		updateDifference.IntermediateState.Pts = u.Pts
 		return updateDifference
 	default:
