@@ -157,7 +157,8 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 	updateDifference := new(UpdateDifference)
 	switch  u := x.(type) {
 	case TL_updates_differenceEmpty:
-		updateDifference.IntermediateState.Date = 0
+		updateDifference.IsSlice = false
+		updateDifference.IntermediateState.Date = u.Date
 		updateDifference.IntermediateState.Seq = u.Seq
 		return updateDifference
 	case TL_updates_difference:
@@ -208,7 +209,6 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 	case TL_updates_differenceTooLong:
 		log.Println("UpdateTooLong")
 		updateDifference.IntermediateState.Pts = u.Pts
-
 		return updateDifference
 	default:
 		log.Println(fmt.Sprintf("RPC: %#v", x))
