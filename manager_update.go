@@ -110,6 +110,12 @@ func NewUpdate(input TL) *Update {
 		update.ChannelID = u.Channel_id
 		update.Flags = u.Flags
 	case TL_updateReadHistoryInbox:
+		// You read messages
+		update.Pts = u.Pts
+		update.PtsCount = u.Pts_count
+		update.MaxID = u.Max_id
+	case TL_updateReadHistoryOutbox:
+		// Other side reads your message
 		update.Pts = u.Pts
 		update.PtsCount = u.Pts_count
 		update.MaxID = u.Max_id
@@ -174,7 +180,11 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 		updateDifference.IsSlice = false
 		updateDifference.IntermediateState = *NewUpdateState(u.State)
 		for _, m := range u.New_messages {
-			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
+			msg := NewMessage(m)
+			if msg != nil {
+				updateDifference.NewMessages = append(updateDifference.NewMessages, *msg)
+			}
+
 		}
 		for _, ch := range u.Chats {
 			switch ch.(type) {
@@ -197,7 +207,11 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 		updateDifference.IsSlice = true
 		updateDifference.IntermediateState = *NewUpdateState(u.Intermediate_state)
 		for _, m := range u.New_messages {
-			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
+			msg := NewMessage(m)
+			if msg != nil {
+				updateDifference.NewMessages = append(updateDifference.NewMessages, *msg)
+			}
+
 		}
 		for _, ch := range u.Chats {
 			switch ch.(type) {
@@ -231,7 +245,7 @@ func (m *MTProto) Updates_GetChannelDifference(inputChannel TL, pts, limit int32
 	m.queueSend <- packetToSend{
 		TL_updates_getChannelDifference{
 			Channel: inputChannel,
-			Filter:  TL_channelMessagesFilterEmpty{},
+			Filter: TL_channelMessagesFilterEmpty{},
 			Pts:     pts,
 			Limit:   limit,
 		},
@@ -253,7 +267,11 @@ func (m *MTProto) Updates_GetChannelDifference(inputChannel TL, pts, limit int32
 		updateDifference.NewMessages = []Message{}
 		updateDifference.OtherUpdates = []Update{}
 		for _, m := range u.New_messages {
-			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
+			msg := NewMessage(m)
+			if msg != nil {
+				updateDifference.NewMessages = append(updateDifference.NewMessages, *msg)
+			}
+
 		}
 		for _, u := range u.Other_updates {
 			updateDifference.OtherUpdates = append(updateDifference.OtherUpdates, *NewUpdate(u))
@@ -266,8 +284,13 @@ func (m *MTProto) Updates_GetChannelDifference(inputChannel TL, pts, limit int32
 		updateDifference.NewMessages = []Message{}
 		updateDifference.OtherUpdates = []Update{}
 		for _, m := range u.Messages {
-			updateDifference.NewMessages = append(updateDifference.NewMessages, *NewMessage(m))
+			msg := NewMessage(m)
+			if msg != nil {
+				updateDifference.NewMessages = append(updateDifference.NewMessages, *msg)
+			}
+
 		}
+
 	case TL_rpc_error:
 		log.Println("Update_GetChannelDiffrence::", u.error_code, u.error_message)
 	}

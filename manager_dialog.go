@@ -88,7 +88,10 @@ func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetI
 		case TL_messages_dialogsSlice:
 			for _, v := range input.Messages {
 				m := NewMessage(v)
-				mMessages[m.ID] = m
+				if m != nil {
+					mMessages[m.ID] = m
+				}
+
 			}
 			for _, v := range input.Chats {
 				switch v.(type) {
@@ -123,7 +126,10 @@ func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetI
 		case TL_messages_dialogs:
 			for _, v := range input.Messages {
 				m := NewMessage(v)
-				mMessages[m.ID] = m
+				if m != nil {
+					mMessages[m.ID] = m
+				}
+
 			}
 			for _, v := range input.Chats {
 				switch v.(type) {

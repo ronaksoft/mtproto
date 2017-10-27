@@ -145,17 +145,27 @@ func (m *MTProto) Channels_GetMessages(channel TL, ids []int32) []Message {
 	switch input := x.(type) {
 	case TL_messages_messages:
 		for _, m := range input.Messages {
-			messages = append(messages, *NewMessage(m))
+			msg := NewMessage(m)
+			if msg != nil {
+				messages = append(messages, *msg)
+			}
+
 		}
 		return messages
 	case TL_messages_messagesSlice:
 		for _, m := range input.Messages {
-			messages = append(messages, *NewMessage(m))
+			msg := NewMessage(m)
+			if msg != nil {
+				messages = append(messages, *msg)
+			}
 		}
 		return messages
 	case TL_messages_channelMessages:
 		for _, m := range input.Messages {
-			messages = append(messages, *NewMessage(m))
+			msg := NewMessage(m)
+			if msg != nil {
+				messages = append(messages, *msg)
+			}
 		}
 		return messages
 	case TL_rpc_error:
@@ -225,18 +235,27 @@ func (m *MTProto) Messages_GetHistory(inputPeer TL, limit int32) ([]Message, int
 	messages := make([]Message, 0, 20)
 	switch input := x.(type) {
 	case TL_messages_messages:
-		for _, msg := range input.Messages {
-			messages = append(messages, *NewMessage(msg))
+		for _, m := range input.Messages {
+			msg := NewMessage(m)
+			if msg != nil {
+				messages = append(messages, *msg)
+			}
 		}
 		return messages, int32(len(messages))
 	case TL_messages_messagesSlice:
-		for _, msg := range input.Messages {
-			messages = append(messages, *NewMessage(msg))
+		for _, m := range input.Messages {
+			msg := NewMessage(m)
+			if msg != nil {
+				messages = append(messages, *msg)
+			}
 		}
 		return messages, input.Count
 	case TL_messages_channelMessages:
-		for _, msg := range input.Messages {
-			messages = append(messages, *NewMessage(msg))
+		for _, m := range input.Messages {
+			msg := NewMessage(m)
+			if msg != nil {
+				messages = append(messages, *msg)
+			}
 		}
 		return messages, input.Count
 	case TL_rpc_error:

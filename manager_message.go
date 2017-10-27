@@ -129,6 +129,7 @@ func NewMessage(input TL) (m *Message) {
 		m.ForwardHeader = new(MessageForwardHeader)
 	default:
 		fmt.Println("NewMessage::UnSupported Input Format", reflect.TypeOf(x).String())
+		return nil
 	}
 	return
 }
