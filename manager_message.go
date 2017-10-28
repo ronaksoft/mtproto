@@ -338,13 +338,94 @@ func (m *MTProto) Messages_ImportChatInvite(hash string) *Chat {
 	return nil
 }
 
-//func (m *MTProto) Messages_CheckInvite(hash string) {
-//	resp := make(chan TL, 1)
-//	m.queueSend <- packetToSend{
-//		TL_messages_checkChatInvite{
-//			hash,
-//		},
-//		resp,
-//	}
-//	//x := <-resp
-//}
+func (m *MTProto) Messages_GetHistory(inputPeer TL, limit, min_id, max_id int32) ([]Message, int32) {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_messages_getHistory{
+			Peer:  inputPeer,
+			Limit: limit,
+			Min_id: min_id,
+			Max_id: max_id,
+		},
+		resp,
+	}
+	x := <-resp
+	messages := make([]Message, 0, 20)
+	switch input := x.(type) {
+	case TL_messages_messages:
+		for _, m := range input.Messages {
+			msg := NewMessage(m)
+			if msg != nil {
+				messages = append(messages, *msg)
+			}
+		}
+		return messages, int32(len(messages))
+	case TL_messages_messagesSlice:
+		for _, m := range input.Messages {
+			msg := NewMessage(m)
+			if msg != nil {
+				messages = append(messages, *msg)
+			}
+		}
+		return messages, input.Count
+	case TL_messages_channelMessages:
+		for _, m := range input.Messages {
+			msg := NewMessage(m)
+			if msg != nil {
+				messages = append(messages, *msg)
+			}
+		}
+		return messages, input.Count
+	case TL_rpc_error:
+		fmt.Println(input.error_message, input.error_code)
+		return messages, 0
+	default:
+		fmt.Println(reflect.TypeOf(input).String())
+		return messages, 0
+	}
+
+}
+
+func (m *MTProto) Messages_GetChats(chatIDs []int32) []Chat {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_messages_getChats{
+			Id: chatIDs,
+		},
+		resp,
+	}
+	x := <-resp
+	chats := make([]Chat, 0, len(chatIDs))
+	switch input := x.(type) {
+	case TL_messages_chats:
+		for _, ch := range input.Chats {
+			chats = append(chats, *NewChat(ch))
+		}
+		return chats
+	case TL_rpc_error:
+		fmt.Println(input.error_code, input.error_message)
+		return chats
+	default:
+		fmt.Println(reflect.TypeOf(input).String())
+		return chats
+	}
+}
+
+func (m *MTProto) Messages_GetFullChat(chatID int32) *Chat {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_messages_getFullChat{
+			Chat_id: chatID,
+		},
+		resp,
+	}
+	x := <-resp
+	chat := new(Chat)
+	switch input := x.(type) {
+	case TL_messages_chatFull:
+		chat = NewChat(input)
+	default:
+
+	}
+	return chat
+}

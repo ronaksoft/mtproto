@@ -322,3 +322,50 @@ func (m *MTProto) Channels_JoinChannel(channelID int32, accessHash int64) {
 	}
 	return
 }
+
+func (m *MTProto) Channels_GetMessages(channel TL, ids []int32) []Message {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_channels_getMessages{
+			Channel: channel,
+			Id:      ids,
+		},
+		resp,
+	}
+	x := <-resp
+	messages := make([]Message, 0, len(ids))
+	switch input := x.(type) {
+	case TL_messages_messages:
+		for _, m := range input.Messages {
+			msg := NewMessage(m)
+			if msg != nil {
+				messages = append(messages, *msg)
+			}
+
+		}
+		return messages
+	case TL_messages_messagesSlice:
+		for _, m := range input.Messages {
+			msg := NewMessage(m)
+			if msg != nil {
+				messages = append(messages, *msg)
+			}
+		}
+		return messages
+	case TL_messages_channelMessages:
+		for _, m := range input.Messages {
+			msg := NewMessage(m)
+			if msg != nil {
+				messages = append(messages, *msg)
+			}
+		}
+		return messages
+	case TL_rpc_error:
+		fmt.Println(input.error_code, input.error_message)
+		return messages
+	default:
+		fmt.Println(reflect.TypeOf(input).String())
+		return messages
+	}
+
+}
