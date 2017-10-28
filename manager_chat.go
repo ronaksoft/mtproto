@@ -222,12 +222,14 @@ func (m *MTProto) Messages_GetFullChat(chatID int32) *Chat {
 	return chat
 }
 
-func (m *MTProto) Messages_GetHistory(inputPeer TL, limit int32) ([]Message, int32) {
+func (m *MTProto) Messages_GetHistory(inputPeer TL, limit, min_id, max_id int32) ([]Message, int32) {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_messages_getHistory{
 			Peer:  inputPeer,
 			Limit: limit,
+			Min_id: min_id,
+			Max_id: max_id,
 		},
 		resp,
 	}

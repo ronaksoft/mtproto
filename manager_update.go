@@ -7,17 +7,22 @@ import (
 )
 
 const (
-	//UPDATE_TYPE_NEW_MESSAGE             string = "NewMessage"
-	//UPDATE_TYPE_CHANNEL_NEW_MESSAGE     string = "ChannelNewMessage"
-	//UPDATE_TYPE_READ_CHANNEL_INBOX      string = "ReadChannelInbox"
-	//UPDATE_TYPE_CHANNEL_TOO_LONG        string = "ChannelTooLong"
-	//UPDATE_TYPE_READ_HISTORY_INBOX      string = "ReadHistoryInbox"
-	//UPDATE_TYPE_USER_PHOTO              string = "UserPhoto"
-	//UPDATE_TYPE_USER_TYPING             string = "UserTyping"
-	//UPDATE_TYPE_CHAT_PARTICIPANT_ADD    string = "ChatParticipantAdd"
-	//UPDATE_TYPE_CHAT_PARTICIPANT_ADMIN  string = "ChatParticipantAdmin"
-	//UPDATE_TYPE_CHAT_PARTICIPANT_DELETE string = "ChatParticipantDelete"
-	//UPDATE_TYPE_CHAT_USER_TYPING        string = "ChatUserTyping"
+	UPDATE_TYPE_NEW_MESSAGE             = "NewMessage"
+	UPDATE_TYPE_CHANNEL_NEW_MESSAGE     = "ChannelNewMessage"
+	UPDATE_TYPE_READ_CHANNEL_INBOX      = "ReadChannelInbox"
+	UPDATE_TYPE_READ_CHANNEL_OUTBOX     = "ReadChannelOutbox"
+	UPDATE_TYPE_CHANNEL_TOO_LONG        = "ChannelTooLong"
+	UPDATE_TYPE_READ_HISTORY_INBOX      = "ReadHistoryInbox"
+	UPDATE_TYPE_READ_HISTORY_OUTBOX     = "ReadHistoryOutbox"
+	UPDATE_TYPE_USER_PHOTO              = "UserPhoto"
+	UPDATE_TYPE_EDIT_MESSAGE            = "EditMessage"
+	UPDATE_TYPE_EDIT_CHANNEL_MESSAGE    = "EditChannelMessage"
+	UPDATE_TYPE_CONTACT_LINK            = "ContactLink"
+	UPDATE_TYPE_USER_TYPING             = "UserTyping"
+	UPDATE_TYPE_CHAT_PARTICIPANT_ADD    = "ChatParticipantAdd"
+	UPDATE_TYPE_CHAT_PARTICIPANT_ADMIN  = "ChatParticipantAdmin"
+	UPDATE_TYPE_CHAT_PARTICIPANT_DELETE = "ChatParticipantDelete"
+	UPDATE_TYPE_CHAT_USER_TYPING        = "ChatUserTyping"
 )
 
 const (
@@ -92,44 +97,57 @@ func NewUpdateState(input TL) *UpdateState {
 //	2. TL_updateNewChannelMessage
 func NewUpdate(input TL) *Update {
 	update := new(Update)
-	update.Type = reflect.TypeOf(input).String()
 	switch u := input.(type) {
 	case TL_updateNewMessage:
+		update.Type = UPDATE_TYPE_NEW_MESSAGE
 		update.Pts = u.Pts
 		update.PtsCount = u.Pts_count
 		update.Message = NewMessage(u.Message)
 	case TL_updateNewChannelMessage:
+		update.Type = UPDATE_TYPE_CHANNEL_NEW_MESSAGE
 		update.Message = NewMessage(u.Message)
 		update.PtsCount = u.Pts_count
 		update.Pts = u.Pts
 	case TL_updateReadChannelInbox:
+		update.Type = UPDATE_TYPE_READ_CHANNEL_INBOX
+		update.ChannelID = u.Channel_id
+		update.MaxID = u.Max_id
+	case TL_updateReadChannelOutbox:
+		update.Type = UPDATE_TYPE_READ_CHANNEL_OUTBOX
 		update.ChannelID = u.Channel_id
 		update.MaxID = u.Max_id
 	case TL_updateChannelTooLong:
+		update.Type = UPDATE_TYPE_CHANNEL_TOO_LONG
 		update.Pts = u.Pts
 		update.ChannelID = u.Channel_id
 		update.Flags = u.Flags
 	case TL_updateReadHistoryInbox:
 		// You read messages
+		update.Type = UPDATE_TYPE_READ_HISTORY_INBOX
 		update.Pts = u.Pts
 		update.PtsCount = u.Pts_count
 		update.MaxID = u.Max_id
 	case TL_updateReadHistoryOutbox:
+		update.Type = UPDATE_TYPE_READ_HISTORY_OUTBOX
 		// Other side reads your message
 		update.Pts = u.Pts
 		update.PtsCount = u.Pts_count
 		update.MaxID = u.Max_id
 	case TL_updateUserPhoto:
+		update.Type = UPDATE_TYPE_USER_PHOTO
 		update.UserID = u.User_id
 		update.Date = u.Date
 		// Save NewUserProfilePhoto(u.Photo)
 	case TL_updateContactLink:
+		update.Type = UPDATE_TYPE_CONTACT_LINK
 		update.UserID = u.User_id
 	case TL_updateEditChannelMessage:
+		update.Type = UPDATE_TYPE_EDIT_CHANNEL_MESSAGE
 		update.Pts = u.Pts
 		update.PtsCount = u.Pts_count
 		update.Message = NewMessage(u.Message)
 	case TL_updateEditMessage:
+		update.Type = UPDATE_TYPE_EDIT_MESSAGE
 		update.Pts = u.Pts
 		update.PtsCount = u.Pts_count
 		update.Message = NewMessage(u.Message)
@@ -245,7 +263,7 @@ func (m *MTProto) Updates_GetChannelDifference(inputChannel TL, pts, limit int32
 	m.queueSend <- packetToSend{
 		TL_updates_getChannelDifference{
 			Channel: inputChannel,
-			Filter: TL_channelMessagesFilterEmpty{},
+			Filter:  TL_channelMessagesFilterEmpty{},
 			Pts:     pts,
 			Limit:   limit,
 		},

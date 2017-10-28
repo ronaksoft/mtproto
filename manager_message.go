@@ -99,6 +99,8 @@ type MessageReplyMarkup struct {
 func NewMessage(input TL) (m *Message) {
 	m = new(Message)
 	switch x := input.(type) {
+	case TL_messageEmpty:
+		return nil
 	case TL_message:
 		m.Flags.loadFlags(x.Flags)
 		m.Type = MESSAGE_TYPE_NORMAL
