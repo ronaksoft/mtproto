@@ -377,7 +377,7 @@ func (m *MTProto) Messages_GetHistory(inputPeer TL, limit, min_id, max_id int32)
 		}
 		return messages, input.Count
 	case TL_rpc_error:
-		fmt.Println(input.error_message, input.error_code)
+		fmt.Println("MTProto::Messages_GetHistory::",input.error_message, input.error_code)
 		return messages, 0
 	default:
 		fmt.Println(reflect.TypeOf(input).String())

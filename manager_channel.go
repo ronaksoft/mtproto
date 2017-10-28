@@ -270,7 +270,7 @@ func (m *MTProto) Channels_GetChannels(in []TL) []Channel {
 		}
 		return channels
 	case TL_rpc_error:
-		fmt.Println(input.error_code, input.error_message)
+		fmt.Println("MTProto::Channels_GetChannels::",input.error_message, input.error_code)
 		return channels
 	default:
 		fmt.Println(reflect.TypeOf(input).String())
@@ -318,7 +318,7 @@ func (m *MTProto) Channels_JoinChannel(channelID int32, accessHash int64) {
 		log.Println(input.error_message, input.error_code)
 	default:
 
-		 log.Println(reflect.TypeOf(input))
+		log.Println(reflect.TypeOf(input))
 	}
 	return
 }
@@ -361,7 +361,7 @@ func (m *MTProto) Channels_GetMessages(channel TL, ids []int32) []Message {
 		}
 		return messages
 	case TL_rpc_error:
-		fmt.Println(input.error_code, input.error_message)
+		fmt.Println("MTProto::Channels_GetMessages::", input.error_message, input.error_code)
 		return messages
 	default:
 		fmt.Println(reflect.TypeOf(input).String())
