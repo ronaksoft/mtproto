@@ -8,6 +8,7 @@ $ go get -v -u github.com/ronak/mtproto
 ```
 
 ## Library
+This library is in alpha phase and function are subjected to change.
 
 *documentation not ready yet*
 
@@ -16,5 +17,4 @@ $ go get -v -u github.com/ronak/mtproto
 * https://core.telegram.org/api
 
 ## License
-
 MIT License
