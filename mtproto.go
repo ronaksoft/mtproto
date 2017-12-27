@@ -99,7 +99,7 @@ func (m *MTProto) Connect() error {
 		m.conn, err = net.DialTCP("tcp", nil, tcpAddr)
 	} else {
 		idx := strings.LastIndex(m.addr, ":")
-		m.addr = fmt.Sprintf("[%s]:%s", m.addr[:idx], m.addr[idx+1:])
+		m.addr = fmt.Sprintf("%s:%s", m.addr[:idx], m.addr[idx+1:])
 		tcpAddr, err = net.ResolveTCPAddr("tcp6", m.addr)
 		if err != nil {
 			log.Println("IPv6::", err.Error())
