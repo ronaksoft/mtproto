@@ -45,7 +45,7 @@ func NewContact(in TL) (contact *Contact) {
 	return
 }
 
-func (m *MTProto) Contacts_GetContacts(hash int32) ([]Contact, []User) {
+func (m *MTProto) Contacts_GetContacts(hash int32) ([]Contact, []User, error) {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{TL_contacts_getContacts{
 		hash},
@@ -55,7 +55,7 @@ func (m *MTProto) Contacts_GetContacts(hash int32) ([]Contact, []User) {
 	list, ok := x.(TL_contacts_contacts)
 	if !ok {
 		log.Println(fmt.Sprintf("RPC: %#v", x))
-		return []Contact{}, []User{}
+		return []Contact{}, []User{}, fmt.Errorf("RPC: %#v", x)
 	}
 	TContacts := make([]Contact, 0, len(list.Contacts))
 	TUsers := make([]User, 0, len(list.Users))
@@ -75,7 +75,7 @@ func (m *MTProto) Contacts_GetContacts(hash int32) ([]Contact, []User) {
 			TUsers[len(TUsers)-1].Status = NewUserStatus(u)
 		}
 	}
-	return TContacts, TUsers
+	return TContacts, TUsers, nil
 }
 
 func (m *MTProto) Contacts_ImportContacts(contacts []TL) {

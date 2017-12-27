@@ -27,6 +27,7 @@ type User struct {
 	BotInfoVersion       int32
 	BotInlinePlaceHolser string
 	RestrictionReason    string
+	TlUser	 						*TL_user
 }
 type UserFlags struct {
 	Self           bool // flags_10?true
@@ -145,6 +146,7 @@ func NewUser(in TL) (user *User) {
 	case TL_userEmpty:
 		user.ID = u.Id
 	case TL_user:
+		user.TlUser = &u
 		user.ID = u.Id
 		user.Username = u.Username
 		user.FirstName = u.First_name

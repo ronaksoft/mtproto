@@ -19,16 +19,14 @@ const (
 	DEBUG_LEVEL_DECODE          = 0x04
 	DEBUG_LEVEL_DECODE_DETAILS  = 0x08
 )
-const (
-	appId   = 48841
-	appHash = "3151c01673d412c18c055f089128be50"
-)
 
 var (
 	__debug int32
 )
 
 type MTProto struct {
+	appId			int64
+	appHash		string
 	addr      string
 	conn      *net.TCPConn
 	f         *os.File
@@ -59,13 +57,16 @@ type packetToSend struct {
 	resp chan TL
 }
 
-func NewMTProto(authkeyfile, dcAddress string, debug int32) (*MTProto, error) {
+func NewMTProto(appId int64, appHash, authkeyfile, dcAddress string, debug int32) (*MTProto, error) {
 	var err error
 	m := new(MTProto)
 	__debug = debug
 	if dcAddress == "" {
 		dcAddress = "149.154.167.91:443"
 	}
+
+	m.appId = appId
+	m.appHash = appHash
 
 	m.f, err = os.OpenFile(authkeyfile, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
@@ -144,7 +145,7 @@ func (m *MTProto) Connect() error {
 		TL_invokeWithLayer{
 			layer,
 			TL_initConnection{
-				appId,
+				int32(m.appId),
 				"NESTED",
 				runtime.GOOS + "/" + runtime.GOARCH,
 				"1.0.0",

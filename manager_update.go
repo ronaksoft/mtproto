@@ -51,6 +51,7 @@ type UpdateState struct {
 	Date         int32
 	Seq          int32
 	UnreadCounts int32
+	TlUpdatesState *TL_updates_state
 }
 type UpdateDifference struct {
 	Type              string
@@ -63,6 +64,7 @@ type UpdateDifference struct {
 	Users             []User
 	IntermediateState UpdateState
 	Seq               int32
+	TlUpdatesDifference *TL_updates_difference
 }
 type ChannelUpdateDifference struct {
 	Empty        bool
@@ -86,6 +88,7 @@ func NewUpdateState(input TL) *UpdateState {
 		us.Pts = in.Pts
 		us.Seq = in.Seq
 		us.Date = in.Date
+		us.TlUpdatesState = &in
 		us.UnreadCounts = in.Unread_count
 	}
 	return us
@@ -157,7 +160,7 @@ func NewUpdate(input TL) *Update {
 	return update
 }
 
-func (m *MTProto) Updates_GetState() *UpdateState {
+func (m *MTProto) Updates_GetState() (*UpdateState, error) {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_updates_getState{},
@@ -166,14 +169,14 @@ func (m *MTProto) Updates_GetState() *UpdateState {
 	x := <-resp
 	switch x.(type) {
 	case TL_updates_state:
-		return NewUpdateState(x)
+		return NewUpdateState(x), nil
 	default:
 		log.Println(fmt.Sprintf("RPC: %#v", x))
-		return nil
+		return nil, fmt.Errorf("RPC: %#v", x)
 	}
 }
 
-func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference {
+func (m *MTProto) Updates_GetDifference(pts, qts, date int32) (*UpdateDifference, error) {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_updates_getDifference{
@@ -193,8 +196,9 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 		updateDifference.IsSlice = false
 		updateDifference.IntermediateState.Date = u.Date
 		updateDifference.IntermediateState.Seq = u.Seq
-		return updateDifference
+		return updateDifference, nil
 	case TL_updates_difference:
+		updateDifference.TlUpdatesDifference = &u
 		updateDifference.IsSlice = false
 		updateDifference.IntermediateState = *NewUpdateState(u.State)
 		for _, m := range u.New_messages {
@@ -219,7 +223,7 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 		for _, update := range u.Other_updates {
 			updateDifference.OtherUpdates = append(updateDifference.OtherUpdates, *NewUpdate(update))
 		}
-		return updateDifference
+		return updateDifference, nil
 	case TL_updates_differenceSlice:
 		updateDifference.Type = UPDATE_DIFFERENCE_SLICE
 		updateDifference.IsSlice = true
@@ -247,14 +251,14 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
 			updateDifference.OtherUpdates = append(updateDifference.OtherUpdates, *NewUpdate(update))
 		}
 
-		return updateDifference
+		return updateDifference, nil
 	case TL_updates_differenceTooLong:
 		updateDifference.Type = UPDATE_DIFFERENCE_TOO_LONG
 		updateDifference.IntermediateState.Pts = u.Pts
-		return updateDifference
+		return updateDifference, nil
 	default:
 		log.Println(fmt.Sprintf("RPC: %#v", x))
-		return updateDifference
+		return updateDifference, fmt.Errorf("RPC: %#v", x)
 	}
 }
 

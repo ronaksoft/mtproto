@@ -293,7 +293,7 @@ func NewMessageMedia(input TL) interface{} {
 }
 
 
-func (m *MTProto) Messages_SendMessage(text string, peer TL, reply_to int32) {
+func (m *MTProto) Messages_SendMessage(text string, peer TL, reply_to int32) (interface{}, error) {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_messages_sendMessage{
@@ -311,7 +311,7 @@ func (m *MTProto) Messages_SendMessage(text string, peer TL, reply_to int32) {
 	switch r := x.(type) {
 	default:
 		log.Println(reflect.TypeOf(r))
-		return
+		return r, nil
 
 	}
 
