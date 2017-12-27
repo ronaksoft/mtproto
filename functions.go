@@ -27,7 +27,7 @@ func (m *MTProto) Auth_SendCode(phonenumber string) (string, error) {
 		case TL_rpc_error:
 			x := x.(TL_rpc_error)
 			if x.error_code != 303 {
-				return "", fmt.Errorf("RPC error_code: %d", x.error_code)
+				return "", fmt.Errorf("RPC error: %v", x)
 			}
 			var newDc int32
 			n, _ := fmt.Sscanf(x.error_message, "PHONE_MIGRATE_%d", &newDc)
