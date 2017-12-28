@@ -302,7 +302,7 @@ func (m *MTProto) Messages_SendMessage(text string, peer TL, reply_to int32) (in
 			reply_to,
 			text,
 			rand.Int63(),
-			nil,
+			TL_null{},
 			nil,
 		},
 		resp,
