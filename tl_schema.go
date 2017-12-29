@@ -10619,11 +10619,17 @@ func (e TL_messages_sendMessage) encode() []byte {
 	x.UInt(crc_messages_sendMessage)
 	x.Int(e.Flags)
 	x.Bytes(e.Peer.encode())
-	x.Int(e.Reply_to_msg_id)
+	if e.Reply_to_msg_id != 0 {
+		x.Int(e.Reply_to_msg_id)
+	}
 	x.String(e.Message)
 	x.Long(e.Random_id)
-	x.Bytes(e.Reply_markup.encode())
-	x.Vector(e.Entities)
+	if _, ok := (e.Reply_markup).(TL_null); !ok {
+		x.Bytes(e.Reply_markup.encode())
+	}
+	if len(e.Entities) > 0 {
+		x.Vector(e.Entities)
+  }
 	return x.buf
 }
 
