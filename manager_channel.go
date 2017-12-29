@@ -253,7 +253,7 @@ func (m *MTProto) Channels_GetParticipants(channel TL, offset, limit int32) []Us
 	return users
 }
 
-func (m *MTProto) Channels_GetChannels(in []TL) []Channel {
+func (m *MTProto) Channels_GetChannels(in []TL) ([]Channel, error) {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_channels_getChannels{
@@ -268,13 +268,13 @@ func (m *MTProto) Channels_GetChannels(in []TL) []Channel {
 		for _, ch := range input.Chats {
 			channels = append(channels, *NewChannel(ch))
 		}
-		return channels
+		return channels, nil
 	case TL_rpc_error:
 		fmt.Println(input.error_code, input.error_message)
-		return channels
+		return channels, fmt.Errorf("TL_rpc_error: %d - %s", input.error_code, input.error_message)
 	default:
 		fmt.Println(reflect.TypeOf(input).String())
-		return channels
+		return channels, fmt.Errorf("Don't know how to handle response: %s - %v", reflect.TypeOf(input).String(), input)
 	}
 }
 

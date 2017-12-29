@@ -1,5 +1,8 @@
 package mtproto
-
+import (
+	"reflect"
+	"fmt"
+)
 type Dialog struct {
 	Type           string
 	Pts            int32
@@ -66,7 +69,7 @@ func (d *Dialog) GetInputPeer() TL {
 	}
 }
 
-func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetInputPeer TL) ([]Dialog, int) {
+func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetInputPeer TL) ([]Dialog, int, error) {
 	resp := make(chan TL, 1)
 	for {
 		m.queueSend <- packetToSend{
@@ -122,7 +125,7 @@ func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetI
 				}
 				dialogs = append(dialogs, *d)
 			}
-			return dialogs, int(input.Count)
+			return dialogs, int(input.Count), nil
 		case TL_messages_dialogs:
 			for _, v := range input.Messages {
 				m := NewMessage(v)
@@ -160,9 +163,9 @@ func (m *MTProto) Messages_GetDialogs(offsetID, offsetDate, limit int32, offsetI
 				}
 				dialogs = append(dialogs, *d)
 			}
-			return dialogs, len(input.Chats)
+			return dialogs, len(input.Chats), nil
 		default:
-			return []Dialog{}, 0
+			return []Dialog{}, 0, fmt.Errorf("Don't know how to handle response: %s - %v", reflect.TypeOf(input).String(), input)
 		}
 	}
 

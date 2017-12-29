@@ -386,7 +386,7 @@ func (m *MTProto) Messages_GetHistory(inputPeer TL, limit, min_id, max_id int32)
 
 }
 
-func (m *MTProto) Messages_GetChats(chatIDs []int32) []Chat {
+func (m *MTProto) Messages_GetChats(chatIDs []int32) ([]Chat, error) {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_messages_getChats{
@@ -401,13 +401,13 @@ func (m *MTProto) Messages_GetChats(chatIDs []int32) []Chat {
 		for _, ch := range input.Chats {
 			chats = append(chats, *NewChat(ch))
 		}
-		return chats
+		return chats, nil
 	case TL_rpc_error:
 		fmt.Println(input.error_code, input.error_message)
-		return chats
+		return chats, fmt.Errorf("TL_rpc_error: %d - %s", input.error_code, input.error_message)
 	default:
 		fmt.Println(reflect.TypeOf(input).String())
-		return chats
+		return chats, fmt.Errorf("Don't know how to handle response: %s - %v", reflect.TypeOf(input).String(), input)
 	}
 }
 
