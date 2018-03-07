@@ -294,6 +294,8 @@ func (m *MTProto) Channels_GetFullChannel(channelID int32, accessHash int64) *Ch
 	switch input := x.(type) {
 	case TL_messages_chatFull:
 		channel = NewChannel(input.Chats[0])
+	case TL_rpc_error:
+		fmt.Println("MTProto::Channels_GetFullChannel::",input.error_message, input.error_code)
 	default:
 		return nil
 	}
@@ -315,7 +317,7 @@ func (m *MTProto) Channels_JoinChannel(channelID int32, accessHash int64) {
 	//channel := new(Channel)
 	switch input := x.(type) {
 	case TL_rpc_error:
-		log.Println(input.error_message, input.error_code)
+		fmt.Println("MTProto::Channels_JoinChannel::",input.error_message, input.error_code)
 	default:
 
 		log.Println(reflect.TypeOf(input))
