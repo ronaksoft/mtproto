@@ -311,7 +311,6 @@ func (m *MTProto) Messages_SendMessage(text string, peer TL, reply_to int32) {
     default:
         log.Println(reflect.TypeOf(r))
         return
-
     }
 
 }

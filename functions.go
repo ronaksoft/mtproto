@@ -2,6 +2,7 @@ package mtproto
 
 import (
 	"fmt"
+	"log"
 	"github.com/pkg/errors"
 )
 
@@ -15,8 +16,8 @@ func (m *MTProto) Auth_SendCode(phonenumber string) (string, error) {
 			Flags:          1,
 			Current_number: TL_boolTrue{},
 			Phone_number:   phonenumber,
-			Api_id:         appId,
-			Api_hash:       appHash,
+			Api_id:         int32(m.appId),
+			Api_hash:       m.appHash,
 		}, resp}
 		x := <-resp
 		switch x.(type) {
@@ -26,7 +27,7 @@ func (m *MTProto) Auth_SendCode(phonenumber string) (string, error) {
 		case TL_rpc_error:
 			x := x.(TL_rpc_error)
 			if x.error_code != 303 {
-				return "", fmt.Errorf("RPC error_code: %d", x.error_code)
+				return "", fmt.Errorf("RPC error: %v", x)
 			}
 			var newDc int32
 			n, _ := fmt.Sscanf(x.error_message, "PHONE_MIGRATE_%d", &newDc)
@@ -59,7 +60,7 @@ func (m *MTProto) Auth_SendCode(phonenumber string) (string, error) {
 	return authSentCode.Phone_code_hash, nil
 }
 
-func (m *MTProto) Auth_SignIn(phonenumber string, hash, code string) error {
+func (m *MTProto) Auth_SignIn(phonenumber string, hash, code string) (TL_auth_authorization, error) {
 	resp := make(chan TL, 1)
 	m.queueSend <- packetToSend{
 		TL_auth_signIn{phonenumber, hash, code},
@@ -68,11 +69,11 @@ func (m *MTProto) Auth_SignIn(phonenumber string, hash, code string) error {
 	x := <-resp
 	auth, ok := x.(TL_auth_authorization)
 	if !ok {
-		return fmt.Errorf("RPC: %#v", x)
+		return TL_auth_authorization{}, fmt.Errorf("RPC: %#v", x)
 	}
 	userSelf := auth.User.(TL_user)
 	fmt.Printf("Signed in: id %d name <%s %s>\n", userSelf.Id, userSelf.First_name, userSelf.Last_name)
-	return nil
+	return auth, nil
 }
 
 func (m *MTProto) Auth_CheckPhone(phonenumber string) bool {
@@ -92,7 +93,24 @@ func (m *MTProto) Auth_CheckPhone(phonenumber string) bool {
 	return false
 }
 
+func (m *MTProto) Users_GetFullSelf() (User, error) {
+	return m.users_getFullUsers(TL_inputUserSelf{})
+}
 
-
-
-
+func (m *MTProto) users_getFullUsers(id TL) (User, error) {
+	resp := make(chan TL, 1)
+	m.queueSend <- packetToSend{
+		TL_users_getFullUser{
+			Id: id,
+		},
+		resp,
+	}
+	x := <-resp
+	user, ok := x.(TL_userFull)
+	if !ok {
+		log.Println(fmt.Sprintf("RPC: %#v", x))
+		return User{}, fmt.Errorf("RPC: %#v", x)
+	}
+	newUser := NewUser(user.User)
+	return *newUser, nil
+}

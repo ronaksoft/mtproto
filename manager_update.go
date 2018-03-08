@@ -157,6 +157,7 @@ func NewUpdate(input TL) *Update {
     return update
 }
 
+
 func (m *MTProto) Updates_GetState() *UpdateState {
     resp := make(chan TL, 1)
     m.queueSend <- packetToSend{
