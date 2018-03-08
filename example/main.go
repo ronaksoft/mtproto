@@ -46,33 +46,12 @@ func main() {
         0,
         int32(time.Date(2017, time.Month(03), 07, 0, 0, 0, 0, time.Local).Unix()),
     )
+    PrintUpdateDifference(updateDifference)
 
-    fmt.Println("Total:", updateDifference.Total)
-    fmt.Println("Intermediate State:", updateDifference.IntermediateState)
 
-    fmt.Println("New Messages:")
-    for _, m := range updateDifference.NewMessages {
-        fmt.Println("-------------------------------")
-        fmt.Println("MessageID:", m.ID, m.MediaType)
-        fmt.Println("Time:", time.Unix(int64(m.Date), 0).Format("2006-01-02"))
-        fmt.Println("From:", updateDifference.Users[m.From].FirstName, updateDifference.Users[m.From].LastName)
-        switch m.To.Type {
-        case mtproto.PEER_TYPE_CHAT:
-            fmt.Println("To:", updateDifference.Chats[m.To.ID].Title, updateDifference.Chats[m.To.ID].Username, m.To.Type)
-        case mtproto.PEER_TYPE_CHANNEL:
-            fmt.Println("To:", updateDifference.Channels[m.To.ID].Title, updateDifference.Channels[m.To.ID].Username, m.To.Type)
-        }
-        fmt.Println(m.Body)
-        fmt.Scanln()
-    }
 
-    fmt.Println("New Updates:")
-    for _, u := range updateDifference.OtherUpdates {
-        fmt.Println("=================================")
-        fmt.Println("", u.Type, u.Date)
-        fmt.Println(u.UserID, u.ChatID, u.ChannelID)
-        fmt.Scanln()
-    }
+
+
 
 }
 
@@ -103,4 +82,37 @@ func LoadMessages(startPoint int) {
         startPoint += 20
     }
 
+}
+
+func PrintUpdateDifference(updateDifference *mtproto.UpdateDifference) {
+    fmt.Println("Total:", updateDifference.Total)
+    fmt.Println("Intermediate State:", updateDifference.IntermediateState)
+
+    fmt.Println("New Messages:")
+    for _, m := range updateDifference.NewMessages {
+        fmt.Println("-------------------------------")
+        fmt.Println("MessageID:", m.ID, m.MediaType)
+        fmt.Println("Time:", time.Unix(int64(m.Date), 0).Format("2006-01-02"))
+        fmt.Println("From:", updateDifference.Users[m.From].FirstName, updateDifference.Users[m.From].LastName)
+        switch m.To.Type {
+        case mtproto.PEER_TYPE_CHAT:
+            fmt.Println("To:", updateDifference.Chats[m.To.ID].Title, updateDifference.Chats[m.To.ID].Username, m.To.Type)
+        case mtproto.PEER_TYPE_CHANNEL:
+            fmt.Println("To:", updateDifference.Channels[m.To.ID].Title, updateDifference.Channels[m.To.ID].Username, m.To.Type)
+        }
+        fmt.Println(m.Body)
+        time.Sleep(1 * time.Second)
+    }
+
+    fmt.Println("New Updates:")
+    for _, u := range updateDifference.OtherUpdates {
+        fmt.Println("=================================")
+        fmt.Println("", u.Type, u.Date)
+        fmt.Println(u.UserID, u.ChatID, u.ChannelID)
+        time.Sleep(1 * time.Second)
+    }
+}
+
+func SendMessage(user mtproto.User, msg string) {
+    _MT.Messages_SendMessage("Hi", )
 }
