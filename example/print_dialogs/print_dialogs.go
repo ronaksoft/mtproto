@@ -12,7 +12,9 @@ var (
 )
 
 func main() {
-    if v, err := mtproto.NewMTProto("../auth_key", "", 0); err != nil {
+    appId := int64(48841)
+    appHash := "3151c01673d412c18c055f089128be50"
+    if v, err := mtproto.NewMTProto(appId, appHash, "../auth_key", "", 0); err != nil {
         log.Println(err.Error())
     } else {
         _MT = v
