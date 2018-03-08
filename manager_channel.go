@@ -270,8 +270,8 @@ func (m *MTProto) Channels_GetChannels(in []TL) ([]Channel, error) {
 		}
 		return channels, nil
 	case TL_rpc_error:
-		fmt.Println(input.error_code, input.error_message)
-		return channels, fmt.Errorf("TL_rpc_error: %d - %s", input.error_code, input.error_message)
+		fmt.Println("MTProto::Channels_GetChannels::",input.error_message, input.error_code)
+		return channels
 	default:
 		fmt.Println(reflect.TypeOf(input).String())
 		return channels, fmt.Errorf("Don't know how to handle response: %s - %v", reflect.TypeOf(input).String(), input)
@@ -294,6 +294,8 @@ func (m *MTProto) Channels_GetFullChannel(channelID int32, accessHash int64) *Ch
 	switch input := x.(type) {
 	case TL_messages_chatFull:
 		channel = NewChannel(input.Chats[0])
+	case TL_rpc_error:
+		fmt.Println("MTProto::Channels_GetFullChannel::",input.error_message, input.error_code)
 	default:
 		return nil
 	}
@@ -315,10 +317,10 @@ func (m *MTProto) Channels_JoinChannel(channelID int32, accessHash int64) {
 	//channel := new(Channel)
 	switch input := x.(type) {
 	case TL_rpc_error:
-		log.Println(input.error_message, input.error_code)
+		fmt.Println("MTProto::Channels_JoinChannel::",input.error_message, input.error_code)
 	default:
 
-		 log.Println(reflect.TypeOf(input))
+		log.Println(reflect.TypeOf(input))
 	}
 	return
 }
@@ -361,7 +363,7 @@ func (m *MTProto) Channels_GetMessages(channel TL, ids []int32) []Message {
 		}
 		return messages
 	case TL_rpc_error:
-		fmt.Println(input.error_code, input.error_message)
+		fmt.Println("MTProto::Channels_GetMessages::", input.error_message, input.error_code)
 		return messages
 	default:
 		fmt.Println(reflect.TypeOf(input).String())
