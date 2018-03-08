@@ -25,15 +25,17 @@ func main() {
     fmt.Println("Total Dialogs (fetched/all):", len(dialogs), dialogsCount)
     for _, d := range dialogs {
         fmt.Println("===============================")
-        fmt.Println("Dialog Type:", d.Type, "Top MessageID:", d.TopMessageID)
+        fmt.Println("Dialog Type:", d.Type)
+        fmt.Println("Top MessageID:", d.TopMessageID)
+        userID := messages[d.TopMessageID].From
+        fmt.Println("From:", users[userID].FirstName, users[userID].LastName, "@", users[userID].Username, "(", userID, ")")
         switch d.Type {
         case mtproto.DIALOG_TYPE_USER:
-            fmt.Println("From:", d.User.FirstName, d.User.LastName, "Username:", d.User.Username, "(", d.User.ID, ")")
+            fmt.Println("Peer Info:", users[d.PeerID].FirstName, users[d.PeerID].LastName)
         case mtproto.DIALOG_TYPE_CHAT:
-            fmt.Println("From:", d.User.FirstName, d.User.LastName, "Username:", d.User.Username, "(", d.User.ID, ")")
-            fmt.Println("Chat Title:", d.Chat.Title, d.Chat.Username, d.Chat.ID, d.Chat.AccessHash)
+            fmt.Println("Peer Info:", chats[d.PeerID].Title, chats[d.PeerID].Username, d.PeerID, d.PeerAccessHash)
         case mtproto.DIALOG_TYPE_CHANNEL:
-            fmt.Println("From:", d.User.FirstName, d.User.LastName, "Username:", d.User.Username, "(", d.User.ID, ")")
+            fmt.Println("Peer Info:", channels[d.PeerID].Title, channels[d.PeerID].Username)
         }
 
     }
