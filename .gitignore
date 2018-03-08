@@ -1,3 +1,4 @@
 .idea
 *.iml
-#/example/auth_key
+/example/auth_key
+/example/update_state
