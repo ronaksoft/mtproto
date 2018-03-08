@@ -1,4 +1,4 @@
-package main
+package get_updates
 
 import (
     "github.com/ronaksoft/mtproto"
@@ -14,22 +14,10 @@ var (
 )
 
 func main() {
-    if v, err := mtproto.NewMTProto("./auth_key", "", 0); err != nil {
+    appId := int64(48841)
+    appHash := "3151c01673d412c18c055f089128be50"
+    if v, err := mtproto.NewMTProto(appId, appHash, "./auth_key", "", 0); err != nil {
         log.Println(err.Error())
-        _MT = v
-        if err := _MT.Connect(); err != nil {
-            log.Println("Connect:", err.Error())
-        }
-        if phoneCodeHash, err := _MT.Auth_SendCode("989121228718"); err != nil {
-            log.Println("SendCode:", err.Error())
-        } else {
-            var phoneCode string
-            fmt.Print("Enter Code:")
-            fmt.Scanln(&phoneCode)
-            phoneCode = strings.TrimSpace(phoneCode)
-            fmt.Println("Code:", phoneCode)
-            _MT.Auth_SignIn("989121228718", phoneCodeHash, phoneCode)
-        }
     } else {
         _MT = v
         if err := _MT.Connect(); err != nil {
@@ -47,11 +35,6 @@ func main() {
         int32(time.Date(2017, time.Month(03), 07, 0, 0, 0, 0, time.Local).Unix()),
     )
     PrintUpdateDifference(updateDifference)
-
-
-
-
-
 
 }
 
@@ -113,6 +96,3 @@ func PrintUpdateDifference(updateDifference *mtproto.UpdateDifference) {
     }
 }
 
-func SendMessage(user mtproto.User, msg string) {
-    _MT.Messages_SendMessage("Hi", )
-}

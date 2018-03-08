@@ -25,31 +25,31 @@ var (
 )
 
 type MTProto struct {
-	appId			int64
-	appHash		string
-	addr      string
-	conn      *net.TCPConn
-	f         *os.File
-	queueSend chan packetToSend
-	stopSend  chan struct{}
-	stopRead  chan struct{}
-	stopPing  chan struct{}
-	allDone   chan struct{}
+    appId     int64
+    appHash   string
+    addr      string
+    conn      *net.TCPConn
+    f         *os.File
+    queueSend chan packetToSend
+    stopSend  chan struct{}
+    stopRead  chan struct{}
+    stopPing  chan struct{}
+    allDone   chan struct{}
 
-	authKey     []byte
-	authKeyHash []byte
-	serverSalt  []byte
-	encrypted   bool
-	sessionId   int64
+    authKey     []byte
+    authKeyHash []byte
+    serverSalt  []byte
+    encrypted   bool
+    sessionId   int64
 
-	mutex        *sync.Mutex
-	lastSeqNo    int32
-	msgsIdToAck  map[int64]packetToSend
-	msgsIdToResp map[int64]chan TL
-	seqNo        int32
-	msgId        int64
+    mutex        *sync.Mutex
+    lastSeqNo    int32
+    msgsIdToAck  map[int64]packetToSend
+    msgsIdToResp map[int64]chan TL
+    seqNo        int32
+    msgId        int64
 
-	dclist map[int32]string
+    dclist map[int32]string
 }
 
 type packetToSend struct {
@@ -57,123 +57,122 @@ type packetToSend struct {
     resp chan TL
 }
 
-
 func NewMTProto(appId int64, appHash, authkeyfile, dcAddress string, debug int32) (*MTProto, error) {
-	var err error
-	m := new(MTProto)
-	__debug = debug
-	if dcAddress == "" {
-		dcAddress = "149.154.167.91:443"
-	}
+    var err error
+    m := new(MTProto)
+    __debug = debug
+    if dcAddress == "" {
+        dcAddress = "149.154.167.91:443"
+    }
 
-	m.appId = appId
-	m.appHash = appHash
+    m.appId = appId
+    m.appHash = appHash
 
-	m.f, err = os.OpenFile(authkeyfile, os.O_RDWR|os.O_CREATE, 0600)
-	if err != nil {
-		return nil, err
-	}
+    m.f, err = os.OpenFile(authkeyfile, os.O_RDWR|os.O_CREATE, 0600)
+    if err != nil {
+        return nil, err
+    }
 
-	err = m.readData()
-	if err == nil {
-		m.encrypted = true
-	} else {
-		m.addr = dcAddress
-		m.encrypted = false
-	}
-	rand.Seed(time.Now().UnixNano())
-	m.sessionId = rand.Int63()
+    err = m.readData()
+    if err == nil {
+        m.encrypted = true
+    } else {
+        m.addr = dcAddress
+        m.encrypted = false
+    }
+    rand.Seed(time.Now().UnixNano())
+    m.sessionId = rand.Int63()
 
-	return m, nil
+    return m, nil
 }
 
 func (m *MTProto) Connect() error {
-	var err error
-	var tcpAddr *net.TCPAddr
-	// connect
-	if strings.Count(m.addr, ":") <= 1 {
-		tcpAddr, err = net.ResolveTCPAddr("tcp", m.addr)
-		if err != nil {
-			log.Println("IPv4::", err.Error())
-			return err
-		}
-		m.conn, err = net.DialTCP("tcp", nil, tcpAddr)
-	} else {
-		idx := strings.LastIndex(m.addr, ":")
-		m.addr = fmt.Sprintf("%s:%s", m.addr[:idx], m.addr[idx+1:])
-		tcpAddr, err = net.ResolveTCPAddr("tcp6", m.addr)
-		if err != nil {
-			log.Println("IPv6::", err.Error())
-			return err
-		}
+    var err error
+    var tcpAddr *net.TCPAddr
+    // connect
+    if strings.Count(m.addr, ":") <= 1 {
+        tcpAddr, err = net.ResolveTCPAddr("tcp", m.addr)
+        if err != nil {
+            log.Println("IPv4::", err.Error())
+            return err
+        }
+        m.conn, err = net.DialTCP("tcp", nil, tcpAddr)
+    } else {
+        idx := strings.LastIndex(m.addr, ":")
+        m.addr = fmt.Sprintf("%s:%s", m.addr[:idx], m.addr[idx+1:])
+        tcpAddr, err = net.ResolveTCPAddr("tcp6", m.addr)
+        if err != nil {
+            log.Println("IPv6::", err.Error())
+            return err
+        }
 
-		m.conn, err = net.DialTCP("tcp6", nil, tcpAddr)
-	}
-	if err != nil {
-		return err
-	}
-	_, err = m.conn.Write([]byte{0xef})
-	if err != nil {
-		return err
-	}
+        m.conn, err = net.DialTCP("tcp6", nil, tcpAddr)
+    }
+    if err != nil {
+        return err
+    }
+    _, err = m.conn.Write([]byte{0xef})
+    if err != nil {
+        return err
+    }
 
-	// get new authKey if need
-	if !m.encrypted {
-		err = m.makeAuthKey()
-		if err != nil {
-			return err
-		}
-	}
+    // get new authKey if need
+    if !m.encrypted {
+        err = m.makeAuthKey()
+        if err != nil {
+            return err
+        }
+    }
 
-	// start goroutines
-	m.queueSend = make(chan packetToSend, 64)
-	m.stopSend = make(chan struct{}, 1)
-	m.stopRead = make(chan struct{}, 1)
-	m.stopPing = make(chan struct{}, 1)
-	m.allDone = make(chan struct{}, 3)
-	m.msgsIdToAck = make(map[int64]packetToSend)
-	m.msgsIdToResp = make(map[int64]chan TL)
-	m.mutex = &sync.Mutex{}
-	go m.sendRoutine()
-	go m.readRoutine()
+    // start goroutines
+    m.queueSend = make(chan packetToSend, 64)
+    m.stopSend = make(chan struct{}, 1)
+    m.stopRead = make(chan struct{}, 1)
+    m.stopPing = make(chan struct{}, 1)
+    m.allDone = make(chan struct{}, 3)
+    m.msgsIdToAck = make(map[int64]packetToSend)
+    m.msgsIdToResp = make(map[int64]chan TL)
+    m.mutex = &sync.Mutex{}
+    go m.sendRoutine()
+    go m.readRoutine()
 
-	var resp chan TL
-	var x TL
+    var resp chan TL
+    var x TL
 
-	// (help_getConfig)
-	resp = make(chan TL, 1)
-	m.queueSend <- packetToSend{
-		TL_invokeWithLayer{
-			layer,
-			TL_initConnection{
-				int32(m.appId),
-				"NESTED",
-				runtime.GOOS + "/" + runtime.GOARCH,
-				"1.0.0",
-				"en",
-				"",
-				"en",
-				TL_help_getConfig{},
-			},
-		},
-		resp,
-	}
-	x = <-resp
-	switch x.(type) {
-	case TL_config:
-		m.dclist = make(map[int32]string, 5)
-		for _, v := range x.(TL_config).Dc_options {
-			v := v.(TL_dcOption)
-			m.dclist[v.Id] = fmt.Sprintf("%s:%d", v.Ip_address, v.Port)
-		}
-	default:
-		return fmt.Errorf("Got: %T", x)
-	}
+    // (help_getConfig)
+    resp = make(chan TL, 1)
+    m.queueSend <- packetToSend{
+        TL_invokeWithLayer{
+            layer,
+            TL_initConnection{
+                int32(m.appId),
+                "NESTED",
+                runtime.GOOS + "/" + runtime.GOARCH,
+                "1.0.0",
+                "en",
+                "",
+                "en",
+                TL_help_getConfig{},
+            },
+        },
+        resp,
+    }
+    x = <-resp
+    switch x.(type) {
+    case TL_config:
+        m.dclist = make(map[int32]string, 5)
+        for _, v := range x.(TL_config).Dc_options {
+            v := v.(TL_dcOption)
+            m.dclist[v.Id] = fmt.Sprintf("%s:%d", v.Ip_address, v.Port)
+        }
+    default:
+        return fmt.Errorf("Got: %T", x)
+    }
 
-	// start keepalive pinging
-	go m.pingRoutine()
+    // start keepalive pinging
+    go m.pingRoutine()
 
-	return nil
+    return nil
 }
 
 func (m *MTProto) Disconnect() error {
