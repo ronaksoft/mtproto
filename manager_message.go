@@ -31,19 +31,19 @@ type MessageFlags struct {
 }
 
 func (f *MessageFlags) loadFlags(flags int32) {
-    if flags&1<<1 != 0 {
+    if flags&(1<<1) != 0 {
         f.Out = true
     }
-    if flags&1<<4 != 0 {
+    if flags&(1<<4) != 0 {
         f.Mentioned = true
     }
-    if flags&1<<5 != 0 {
+    if flags&(1<<5) != 0 {
         f.MediaUnread = true
     }
-    if flags&1<<13 != 0 {
+    if flags&(1<<13) != 0 {
         f.Silent = true
     }
-    if flags&1<<14 != 0 {
+    if flags&(1<<14) != 0 {
         f.Post = true
     }
 }

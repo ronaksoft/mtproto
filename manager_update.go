@@ -58,9 +58,9 @@ type UpdateDifference struct {
     Total             int32
     NewMessages       []Message
     OtherUpdates      []Update
-    Chats             []Chat
-    Channels          []Channel
-    Users             []User
+    Chats             map[int32]Chat
+    Channels          map[int32]Channel
+    Users             map[int32]User
     IntermediateState UpdateState
     Seq               int32
 }
@@ -187,6 +187,9 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
     }
     x := <-resp
     updateDifference := new(UpdateDifference)
+    updateDifference.Users = make(map[int32]User)
+    updateDifference.Chats = make(map[int32]Chat)
+    updateDifference.Channels = make(map[int32]Channel)
     switch  u := x.(type) {
     case TL_updates_differenceEmpty:
         updateDifference.Type = UPDATE_DIFFERENCE_EMPTY
@@ -207,14 +210,23 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
         for _, ch := range u.Chats {
             switch ch.(type) {
             case TL_chatFull, TL_chat, TL_chatForbidden, TL_chatEmpty:
-                updateDifference.Chats = append(updateDifference.Chats, *NewChat(ch))
+                newChat := NewChat(ch)
+                if newChat != nil {
+                    updateDifference.Chats[newChat.ID] = *newChat
+                }
             case TL_channel, TL_channelForbidden, TL_channelFull:
-                updateDifference.Channels = append(updateDifference.Channels, *NewChannel(ch))
+                newChannel := NewChannel(ch)
+                if newChannel != nil {
+                    updateDifference.Channels[newChannel.ID] = *newChannel
+                }
             }
 
         }
-        for _, user := range u.Users {
-            updateDifference.Users = append(updateDifference.Users, *NewUser(user))
+        for _, u := range u.Users {
+            newUser := NewUser(u)
+            if newUser != nil {
+                updateDifference.Users[newUser.ID] = *newUser
+            }
         }
         for _, update := range u.Other_updates {
             updateDifference.OtherUpdates = append(updateDifference.OtherUpdates, *NewUpdate(update))
@@ -234,14 +246,23 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
         for _, ch := range u.Chats {
             switch ch.(type) {
             case TL_chatFull, TL_chat, TL_chatForbidden, TL_chatEmpty:
-                updateDifference.Chats = append(updateDifference.Chats, *NewChat(ch))
+                newChat := NewChat(ch)
+                if newChat != nil {
+                    updateDifference.Chats[newChat.ID] = *newChat
+                }
             case TL_channel, TL_channelForbidden, TL_channelFull:
-                updateDifference.Channels = append(updateDifference.Channels, *NewChannel(ch))
+                newChannel := NewChannel(ch)
+                if newChannel != nil {
+                    updateDifference.Channels[newChannel.ID] = *newChannel
+                }
             }
 
         }
-        for _, user := range u.Users {
-            updateDifference.Users = append(updateDifference.Users, *NewUser(user))
+        for _, u := range u.Users {
+            newUser := NewUser(u)
+            if newUser != nil {
+                updateDifference.Users[newUser.ID] = *newUser
+            }
         }
         for _, update := range u.Other_updates {
             updateDifference.OtherUpdates = append(updateDifference.OtherUpdates, *NewUpdate(update))
