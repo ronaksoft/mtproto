@@ -1,10 +1,9 @@
-package get_updates
+package main
 
 import (
     "github.com/ronaksoft/mtproto"
     "log"
     "fmt"
-    "strings"
     "time"
     "github.com/kr/pretty"
 )
@@ -16,7 +15,7 @@ var (
 func main() {
     appId := int64(48841)
     appHash := "3151c01673d412c18c055f089128be50"
-    if v, err := mtproto.NewMTProto(appId, appHash, "./auth_key", "", 0); err != nil {
+    if v, err := mtproto.NewMTProto(appId, appHash, "../sina_auth_key", "", 0); err != nil {
         log.Println(err.Error())
     } else {
         _MT = v
@@ -30,7 +29,7 @@ func main() {
     pretty.Println(updateState)
 
     updateDifference := _MT.Updates_GetDifference(
-        updateState.Pts-100,
+        updateState.Pts-3,
         0,
         int32(time.Date(2017, time.Month(03), 07, 0, 0, 0, 0, time.Local).Unix()),
     )
@@ -87,12 +86,12 @@ func PrintUpdateDifference(updateDifference *mtproto.UpdateDifference) {
         time.Sleep(1 * time.Second)
     }
 
-    fmt.Println("New Updates:")
-    for _, u := range updateDifference.OtherUpdates {
-        fmt.Println("=================================")
-        fmt.Println("", u.Type, u.Date)
-        fmt.Println(u.UserID, u.ChatID, u.ChannelID)
-        time.Sleep(1 * time.Second)
-    }
+    //fmt.Println("New Updates:")
+    //for _, u := range updateDifference.OtherUpdates {
+    //    fmt.Println("=================================")
+    //    fmt.Println("", u.Type, u.Date)
+    //    fmt.Println(u.UserID, u.ChatID, u.ChannelID)
+    //    time.Sleep(1 * time.Second)
+    //}
 }
 

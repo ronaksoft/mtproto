@@ -14,7 +14,7 @@ var (
 func main() {
     appId := int64(48841)
     appHash := "3151c01673d412c18c055f089128be50"
-    if v, err := mtproto.NewMTProto(appId, appHash,"../auth_key", "", 0); err != nil {
+    if v, err := mtproto.NewMTProto(appId, appHash,"../sina_auth_key", "", 0); err != nil {
         log.Println(err.Error())
         return
     } else {
@@ -23,7 +23,7 @@ func main() {
             log.Println("Connect:", err.Error())
         }
     }
-    if phoneCodeHash, err := _MT.Auth_SendCode("989121228718"); err != nil {
+    if phoneCodeHash, err := _MT.Auth_SendCode("989127767770"); err != nil {
         log.Println("SendCode:", err.Error())
     } else {
         var phoneCode string
@@ -31,7 +31,7 @@ func main() {
         fmt.Scanln(&phoneCode)
         phoneCode = strings.TrimSpace(phoneCode)
         fmt.Println("Code:", phoneCode)
-        _MT.Auth_SignIn("989121228718", phoneCodeHash, phoneCode)
+        _MT.Auth_SignIn("989127767770", phoneCodeHash, phoneCode)
     }
 
 }
