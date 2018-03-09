@@ -18,6 +18,10 @@ const (
     UPDATE_TYPE_EDIT_MESSAGE            = "EditMessage"
     UPDATE_TYPE_EDIT_CHANNEL_MESSAGE    = "EditChannelMessage"
     UPDATE_TYPE_CONTACT_LINK            = "ContactLink"
+    UPDATE_TYPE_DRAFT_MESSAGE           = "DraftMessage"
+    UPDATE_TYPE_SAVED_GIFS              = "SavedGIFs"
+    UPDATE_TYPE_MESSAGE_ID              = "MessageID"
+    UPDATE_TYPE_DELETE_MESSAGES         = "DeleteMessages"
     UPDATE_TYPE_USER_TYPING             = "UserTyping"
     UPDATE_TYPE_CHAT_PARTICIPANT_ADD    = "ChatParticipantAdd"
     UPDATE_TYPE_CHAT_PARTICIPANT_ADMIN  = "ChatParticipantAdmin"
@@ -36,6 +40,7 @@ type Update struct {
     UserID    int32
     InviterID int32
     ChatID    int32
+    MessageID int32
     Pts       int32
     PtsCount  int32
     Message   *Message
@@ -151,12 +156,23 @@ func NewUpdate(input TL) *Update {
         update.Pts = u.Pts
         update.PtsCount = u.Pts_count
         update.Message = NewMessage(u.Message)
+    case TL_updateSavedGifs:
+        update.Type = UPDATE_TYPE_SAVED_GIFS
+    case TL_updateDraftMessage:
+        update.Type = UPDATE_TYPE_DRAFT_MESSAGE
+        update.Date = u.Draft.(TL_draftMessage).Date
+    case TL_updateMessageID:
+        update.Type = UPDATE_TYPE_MESSAGE_ID
+        update.MessageID = u.Id
+    case TL_updateDeleteMessages:
+        update.Type = UPDATE_TYPE_DELETE_MESSAGES
+        update.Pts = u.Pts
+        update.PtsCount = u.Pts_count
     default:
         update.Type = reflect.TypeOf(u).String()
     }
     return update
 }
-
 
 func (m *MTProto) Updates_GetState() *UpdateState {
     resp := make(chan TL, 1)

@@ -42,6 +42,7 @@ func init() {
                     "Get the last 'numberOfUpdates' updates",
                     []CommandFlag{
                         {"--numberOfUpdates", "The number of last updates"},
+                        {"--minutes", "Get updates from n minutes ago"},
                     },
                     []Command{},
                 },
