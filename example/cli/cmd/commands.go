@@ -86,6 +86,7 @@ var GetDialogsCmd = &cobra.Command{
 
     },
 }
+
 func init() {
     RootCmd.AddCommand(LoginCmd, GetUpdatesCmd, GetDialogsCmd)
     LoginCmd.Flags().String("phone", "989121228718", "")
