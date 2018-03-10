@@ -160,7 +160,7 @@ func NewMessage(input TL) (m *Message) {
 // input:
 //  1. TL_draftMessage
 //  2. TL_draftMessageEmpty
-func NewDraftMessage(input TL) (dm *DraftMessage) {
+func NewDraftMessage(input TL) *DraftMessage {
     m := new(DraftMessage)
     switch x:=input.(type) {
     case TL_draftMessage:
@@ -173,7 +173,7 @@ func NewDraftMessage(input TL) (dm *DraftMessage) {
         }
     case TL_draftMessageEmpty:
     }
-    return
+    return m
 }
 
 // NewMessageAction
