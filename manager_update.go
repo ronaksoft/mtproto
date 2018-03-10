@@ -31,6 +31,7 @@ const (
 
 const (
     UPDATE_DIFFERENCE_EMPTY    = "EMPTY"
+    UPDATE_DIFFERENCE_COMPLETE = "COMPLETE"
     UPDATE_DIFFERENCE_SLICE    = "SLICE"
     UPDATE_DIFFERENCE_TOO_LONG = "TOO_LONG"
 )
@@ -160,7 +161,12 @@ func NewUpdate(input TL) *Update {
         update.Type = UPDATE_TYPE_SAVED_GIFS
     case TL_updateDraftMessage:
         update.Type = UPDATE_TYPE_DRAFT_MESSAGE
-        update.Date = u.Draft.(TL_draftMessage).Date
+        switch x := u.Draft.(type) {
+        case TL_draftMessage:
+            update.Date = x.Date
+        case TL_draftMessageEmpty:
+        }
+
     case TL_updateMessageID:
         update.Type = UPDATE_TYPE_MESSAGE_ID
         update.MessageID = u.Id
@@ -215,6 +221,7 @@ func (m *MTProto) Updates_GetDifference(pts, qts, date int32) *UpdateDifference 
         updateDifference.IntermediateState.Seq = u.Seq
         return updateDifference
     case TL_updates_difference:
+        updateDifference.Type = UPDATE_DIFFERENCE_COMPLETE
         updateDifference.IsSlice = false
         updateDifference.IntermediateState = *NewUpdateState(u.State)
         for _, m := range u.New_messages {

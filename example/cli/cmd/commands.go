@@ -4,7 +4,6 @@ import (
     "github.com/spf13/cobra"
     "fmt"
     "strings"
-    "github.com/kr/pretty"
     "time"
     "strconv"
     "github.com/ronaksoft/mtproto"
@@ -33,24 +32,42 @@ var GetUpdatesCmd = &cobra.Command{
     Run: func(cmd *cobra.Command, args []string) {
         numberOfUpdates, _ := strconv.Atoi(cmd.Flag("numberOfUpdates").Value.String())
         minutes, _ := strconv.Atoi(cmd.Flag("minutes").Value.String())
-        updateState := _MT.Updates_GetState()
-        fmt.Println("Update State Time:", time.Unix(int64(updateState.Date), 0).Format("2006-01-02 15:04:05"))
-        pretty.Println(updateState)
 
+
+        updateState := _MT.Updates_GetState()
         updateDifference := _MT.Updates_GetDifference(
             updateState.Pts-int32(numberOfUpdates),
             0,
             int32(time.Now().Add(- time.Duration(minutes) * time.Minute).Unix()),
         )
 
-        fmt.Println("Total:", updateDifference.Total)
-        fmt.Println("Intermediate State:", updateDifference.IntermediateState)
+        tableState := tablewriter.NewWriter(os.Stdout)
+        tableState.SetHeader([]string{"Date", "Pts", "Qts", "Seq", "Unread Counts"})
+        tableState.Append([]string{
+            fmt.Sprintf("%d", updateState.Date),
+            fmt.Sprintf("%d", updateState.Pts),
+            fmt.Sprintf("%d", updateState.Qts),
+            fmt.Sprintf("%d", updateState.Seq),
+            fmt.Sprintf("%d", updateState.UnreadCounts),
+
+        })
+        tableState.Append([]string{
+            fmt.Sprintf("%d", updateDifference.IntermediateState.Date),
+            fmt.Sprintf("%d", updateDifference.IntermediateState.Pts),
+            fmt.Sprintf("%d", updateDifference.IntermediateState.Qts),
+            fmt.Sprintf("%d", updateDifference.IntermediateState.Seq),
+            fmt.Sprintf("%d", updateDifference.IntermediateState.UnreadCounts),
+        })
+        tableState.SetCaption(true, "Table 1. :: Update States")
+        tableState.Render()
+        fmt.Println()
+        fmt.Println()
 
         tableMessages := tablewriter.NewWriter(os.Stdout)
         tableMessages.SetHeader([]string{"Index", "Message ID", "Time", "From", "To", "Body"})
         tableMessages.SetColMinWidth(4, 50)
+        tableMessages.SetCaption(true, "Table 2. :: New Messages")
 
-        fmt.Println("New Messages:")
         idx := 0
         for _, m := range updateDifference.NewMessages {
             idx++
@@ -61,10 +78,18 @@ var GetUpdatesCmd = &cobra.Command{
                 fmt.Sprintf("%s %s", updateDifference.Users[m.From].FirstName, updateDifference.Users[m.From].LastName),
             }
             switch m.To.Type {
+            case mtproto.PEER_TYPE_USER:
+                tableRow = append(
+                    tableRow,
+                    fmt.Sprintf("%s %s",
+                        updateDifference.Users[m.To.ID].FirstName,
+                        updateDifference.Users[m.To.ID].LastName,
+                    ),
+                )
             case mtproto.PEER_TYPE_CHAT:
                 tableRow = append(
                     tableRow,
-                    fmt.Sprintf("%s @%s %s",
+                    fmt.Sprintf("%s(@%s) %s",
                         updateDifference.Chats[m.To.ID].Title,
                         updateDifference.Chats[m.To.ID].Username,
                         m.To.Type,
@@ -73,7 +98,7 @@ var GetUpdatesCmd = &cobra.Command{
             case mtproto.PEER_TYPE_CHANNEL:
                 tableRow = append(
                     tableRow,
-                    fmt.Sprintf("%s @%s %s",
+                    fmt.Sprintf("%s(@%s) %s",
                         updateDifference.Channels[m.To.ID].Title,
                         updateDifference.Channels[m.To.ID].Username,
                         m.To.Type,
@@ -89,12 +114,11 @@ var GetUpdatesCmd = &cobra.Command{
 
         }
         tableMessages.Render()
+        fmt.Println()
+        fmt.Println()
 
         tableUpdates := tablewriter.NewWriter(os.Stdout)
         tableUpdates.SetHeader([]string{"Index", "Update Type", "Date", "UserID", "ChannelID", "ChatID", "MessageID", "Pts", "Pts Count"})
-
-        //fmt.Println("-------------------------------")
-        //fmt.Println("===============================")
         idx = 0
         for _, u := range updateDifference.OtherUpdates {
             idx++
@@ -117,7 +141,11 @@ var GetUpdatesCmd = &cobra.Command{
             )
             tableUpdates.Append(tableRow)
         }
+
+        tableUpdates.SetCaption(true, "Table 3. :: Other Updates")
         tableUpdates.Render()
+        fmt.Println()
+        fmt.Println()
     },
 }
 

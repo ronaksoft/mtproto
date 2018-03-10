@@ -46,9 +46,12 @@ func cmdCompleter(d prompt.Document) []prompt.Suggest {
 func cmdExecutor(in string) {
     args := strings.Fields(in)
     os.Args = append([]string{}, args...)
-    if err := cmd.RootCmd.Execute(); err != nil {
-        fmt.Println(err.Error())
+    if len(os.Args) >= 1 {
+        if err := cmd.RootCmd.Execute(); err != nil {
+            fmt.Println(err.Error())
+        }
     }
+
 }
 
 
