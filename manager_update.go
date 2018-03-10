@@ -66,7 +66,6 @@ func (u UpdateCore) GetString(i IUpdate, keyName string) (string, bool) {
 func (u UpdateCore) GetType(i IUpdate) string {
     return reflect.TypeOf(i).String()
 }
-
 func (u UpdateCore) GetMap(i IUpdate) map[string]interface{} {
     return structs.Map(i)
 }
@@ -177,22 +176,7 @@ type UpdateUnknown struct {
     Type string
 }
 
-//type Update struct {
-//    Type       string
-//    UserID     int32
-//    InviterID  int32
-//    ChatID     int32
-//    MessageID  int32
-//    Pts        int32
-//    PtsCount   int32
-//    Message    *Message
-//    MessageIDs []int32
-//    Version    int32
-//    Date       int32
-//    ChannelID  int32
-//    MaxID      int32
-//    Flags      int32
-//}
+
 type UpdateState struct {
     Qts          int32
     Pts          int32
