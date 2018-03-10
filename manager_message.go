@@ -74,23 +74,43 @@ type MessageForwardHeader struct {
     ChannelPost int32
     Author      string
 }
-type MessageMedia interface{}
+
+type DraftMessage struct {
+    Flags    int32
+    ReplyTo  int32
+    Body     string
+    Date     int32
+    Entities []MessageEntity
+}
+
+type IMessageMedia interface {
+    GetType() string
+}
+type MessageMediaCore struct{}
+
+func (mm MessageMediaCore) GetType() string {
+    return reflect.TypeOf(mm).String()
+}
+
 type MessageMediaPhoto struct {
+    MessageMediaCore
     Caption string
     Photo   Photo
 }
 type MessageMediaContact struct {
+    MessageMediaCore
     Firstname string
     Lastname  string
     UserID    int32
     Phone     string
 }
 type MessageMediaDocument struct {
+    MessageMediaCore
     Caption  string
     Document Document
 }
-type MessageReplyMarkup struct {
-}
+
+//type MessageReplyMarkup struct {}
 
 // NewMessage
 // input
@@ -132,6 +152,26 @@ func NewMessage(input TL) (m *Message) {
     default:
         fmt.Println("NewMessage::UnSupported Input Format", reflect.TypeOf(x).String())
         return nil
+    }
+    return
+}
+
+// NewDraftMessage
+// input:
+//  1. TL_draftMessage
+//  2. TL_draftMessageEmpty
+func NewDraftMessage(input TL) (dm *DraftMessage) {
+    m := new(DraftMessage)
+    switch x:=input.(type) {
+    case TL_draftMessage:
+        m.Date = x.Date
+        m.Flags = x.Flags
+        m.Body = x.Message
+        m.ReplyTo = x.Reply_to_msg_id
+        for _, e := range x.Entities {
+            m.Entities = append(m.Entities, *NewMessageEntity(e))
+        }
+    case TL_draftMessageEmpty:
     }
     return
 }
@@ -265,7 +305,7 @@ func NewMessageForwardHeader(input TL) (fwd *MessageForwardHeader) {
 //	2. TL_messageMediaContact
 //	3. TL_messageMediaDocument
 //
-func NewMessageMedia(input TL) interface{} {
+func NewMessageMedia(input TL) IMessageMedia {
     switch x := input.(type) {
     case TL_messageMediaPhoto:
         mm := new(MessageMediaPhoto)
@@ -291,6 +331,9 @@ func NewMessageMedia(input TL) interface{} {
     }
     return nil
 }
+
+// Functions
+// All the method call are in the following section.
 
 func (m *MTProto) Messages_SendMessage(text string, peer TL, reply_to int32) {
     resp := make(chan TL, 1)
