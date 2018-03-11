@@ -27,6 +27,12 @@ func init() {
             "Telegram Client",
             []CommandFlag{
                 {"--account", "Choose a name for this account (default: unknown)"},
+                {"--peerType", "Filter Peer Type"},
+                {"--peerAccessHash", "Access hash of the peer"},
+                {"--peerID", ""},
+                {"--limit", "Limite of the result"},
+                {"--minID", "MinID of the messages"},
+                {"--maxID", "MaxID of the messages"},
             },
             []Command{
                 {
@@ -49,9 +55,19 @@ func init() {
                 {
                     "getDialogs",
                     "Get dialogs of the logged in user",
-                    []CommandFlag{
-                        {"--peerType", "Filter Peer Type"},
-                    },
+                    []CommandFlag{},
+                    []Command{},
+                },
+                {
+                    "getHistory",
+                    "Get History of the peer",
+                    []CommandFlag{},
+                    []Command{},
+                },
+                {
+                    "readHistory",
+                    "Read all the messages",
+                    []CommandFlag{},
                     []Command{},
                 },
             },

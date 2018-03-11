@@ -162,7 +162,7 @@ func NewMessage(input TL) (m *Message) {
 //  2. TL_draftMessageEmpty
 func NewDraftMessage(input TL) *DraftMessage {
     m := new(DraftMessage)
-    switch x:=input.(type) {
+    switch x := input.(type) {
     case TL_draftMessage:
         m.Date = x.Date
         m.Flags = x.Flags
@@ -424,7 +424,31 @@ func (m *MTProto) Messages_GetHistory(inputPeer TL, limit, min_id, max_id int32)
         fmt.Println(reflect.TypeOf(input).String())
         return messages, 0
     }
+}
 
+func (m *MTProto) Messages_ReadHistory(inputPeer TL, maxID int32) (Pts, PtsCount int32) {
+    resp := make(chan TL, 1)
+    m.queueSend <- packetToSend{
+        TL_messages_readHistory{
+            Peer:   inputPeer,
+            Max_id: maxID,
+        },
+        resp,
+    }
+    x := <-resp
+
+    switch input := x.(type) {
+    case TL_messages_affectedMessages:
+        Pts = input.Pts
+        PtsCount = input.Pts_count
+    case TL_rpc_error:
+        fmt.Println("MTProto::Messages_GetHistory::", input.error_message, input.error_code)
+        return 0, 0
+    default:
+        fmt.Println(reflect.TypeOf(input).String())
+        return 0, 0
+    }
+    return
 }
 
 func (m *MTProto) Messages_GetChats(chatIDs []int32) []Chat {

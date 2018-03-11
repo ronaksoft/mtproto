@@ -93,6 +93,7 @@ func (user *User) GetPeer() TL {
         User_id: user.ID,
     }
 }
+
 func NewUserStatus(userStatus TL) (s *UserStatus) {
     s = new(UserStatus)
     switch status := userStatus.(type) {
@@ -169,4 +170,11 @@ func NewUser(in TL) (user *User) {
         return nil
     }
     return
+}
+
+func NewUserInputPeer(userID int32, accessHash int64) TL_inputPeerUser {
+    return TL_inputPeerUser{
+        User_id: userID,
+        Access_hash: accessHash,
+    }
 }

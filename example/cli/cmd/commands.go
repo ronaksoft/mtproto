@@ -11,6 +11,14 @@ import (
     "os"
 )
 
+var (
+    _fPeerType       *string
+    _fPeerID         *int32
+    _fMaxID          *int32
+    _fMinID          *int32
+    _fPeerAccessHash *int64
+    _fLimit          *int32
+)
 var LoginCmd = &cobra.Command{
     Use: "login",
     Run: func(cmd *cobra.Command, args []string) {
@@ -33,14 +41,12 @@ var GetUpdatesCmd = &cobra.Command{
         numberOfUpdates, _ := strconv.Atoi(cmd.Flag("numberOfUpdates").Value.String())
         minutes, _ := strconv.Atoi(cmd.Flag("minutes").Value.String())
 
-
         updateState := _MT.Updates_GetState()
         updateDifference := _MT.Updates_GetDifference(
             updateState.Pts-int32(numberOfUpdates),
             0,
             int32(time.Now().Add(- time.Duration(minutes) * time.Minute).Unix()),
         )
-
 
         tableState := tablewriter.NewWriter(os.Stdout)
         tableState.SetHeader([]string{"Type", "Date", "Pts", "Qts", "Seq", "Unread Counts"})
@@ -51,7 +57,6 @@ var GetUpdatesCmd = &cobra.Command{
             fmt.Sprintf("%d", updateState.Qts),
             fmt.Sprintf("%d", updateState.Seq),
             fmt.Sprintf("%d", updateState.UnreadCounts),
-
         })
         tableState.Append([]string{
             updateDifference.Type,
@@ -65,7 +70,6 @@ var GetUpdatesCmd = &cobra.Command{
         tableState.Render()
         fmt.Println()
         fmt.Println()
-
 
         idx := 0
         tableMessages := tablewriter.NewWriter(os.Stdout)
@@ -123,7 +127,6 @@ var GetUpdatesCmd = &cobra.Command{
 
                 }
 
-
             }
 
             if len(updateDifference.OtherUpdates) > 0 {
@@ -142,32 +145,32 @@ var GetUpdatesCmd = &cobra.Command{
                         tableRow = append(tableRow, "No Time")
                     }
 
-                    if userID, ok :=u.GetInt32(u,"UserID"); ok {
+                    if userID, ok := u.GetInt32(u, "UserID"); ok {
                         tableRow = append(tableRow, fmt.Sprintf("%d", userID))
                     } else {
                         tableRow = append(tableRow, "-")
                     }
-                    if channelID, ok :=u.GetInt32(u,"ChannelID"); ok {
+                    if channelID, ok := u.GetInt32(u, "ChannelID"); ok {
                         tableRow = append(tableRow, fmt.Sprintf("%d", channelID))
                     } else {
                         tableRow = append(tableRow, "-")
                     }
-                    if chatID, ok :=u.GetInt32(u, "ChatID"); ok {
+                    if chatID, ok := u.GetInt32(u, "ChatID"); ok {
                         tableRow = append(tableRow, fmt.Sprintf("%d", chatID))
                     } else {
                         tableRow = append(tableRow, "-")
                     }
-                    if messageID, ok :=u.GetInt32(u, "MessageID"); ok {
+                    if messageID, ok := u.GetInt32(u, "MessageID"); ok {
                         tableRow = append(tableRow, fmt.Sprintf("%d", messageID))
                     } else {
                         tableRow = append(tableRow, "-")
                     }
-                    if pts, ok :=u.GetInt32(u, "Pts"); ok {
+                    if pts, ok := u.GetInt32(u, "Pts"); ok {
                         tableRow = append(tableRow, fmt.Sprintf("%d", pts))
                     } else {
                         tableRow = append(tableRow, "-")
                     }
-                    if ptsCount, ok :=u.GetInt32(u, "UserID"); ok {
+                    if ptsCount, ok := u.GetInt32(u, "UserID"); ok {
                         tableRow = append(tableRow, fmt.Sprintf("%d", ptsCount))
                     } else {
                         tableRow = append(tableRow, "-")
@@ -202,32 +205,100 @@ var GetUpdatesCmd = &cobra.Command{
 var GetDialogsCmd = &cobra.Command{
     Use: "getDialogs",
     Run: func(cmd *cobra.Command, args []string) {
-        dialogs, users, chats, channels, messages, dialogsCount := _MT.Messages_GetDialogs(0, int32(time.Now().Unix()), 100, mtproto.TL_inputPeerSelf{})
+        dialogs, users, chats, channels, messages, dialogsCount := _MT.Messages_GetDialogs(0, int32(time.Now().Unix()), *_fLimit, mtproto.TL_inputPeerSelf{})
         fmt.Println("Total Dialogs (fetched/all):", len(dialogs), dialogsCount)
+
+        _ = chats
+        _ = channels
+
+        tableDialogs := tablewriter.NewWriter(os.Stdout)
+        tableDialogs.SetHeader([]string{"Index", "Peer Type", "Peer ID", "AccessHash", "Date", "Last Sender ID", "Last Sender"})
+        tableDialogs.SetCaption(true, "Table 1. :: Dialogs")
+
+        idx := 0
         for _, d := range dialogs {
-            fmt.Println("===============================")
-            fmt.Println("Dialog Type:", d.Type)
-            fmt.Println("Top MessageID:", d.TopMessageID)
+            if len(*_fPeerType) > 0 && *_fPeerType != d.Type {
+                continue
+            }
+            idx++
             userID := messages[d.TopMessageID].From
             fmt.Println("From:", users[userID].FirstName, users[userID].LastName, "@", users[userID].Username, "(", userID, ")")
-            switch d.Type {
-            case mtproto.DIALOG_TYPE_USER:
-                fmt.Println("Peer Info:", users[d.PeerID].FirstName, users[d.PeerID].LastName)
-            case mtproto.DIALOG_TYPE_CHAT:
-                fmt.Println("Peer Info:", chats[d.PeerID].Title, chats[d.PeerID].Username, d.PeerID, d.PeerAccessHash)
-            case mtproto.DIALOG_TYPE_CHANNEL:
-                fmt.Println("Peer Info:", channels[d.PeerID].Title, channels[d.PeerID].Username)
-            }
-
+            tableDialogs.Append([]string{
+                fmt.Sprintf("%d", idx),
+                d.Type,
+                fmt.Sprintf("%d", d.PeerID),
+                fmt.Sprintf("%d", d.PeerAccessHash),
+                time.Unix(int64(messages[d.TopMessageID].Date), 0).Format("2006-01-02 15:04:05"),
+                fmt.Sprintf("%d", userID),
+                fmt.Sprintf("%s %s", users[messages[d.TopMessageID].From].FirstName, users[messages[d.TopMessageID].From].LastName),
+            })
         }
+        tableDialogs.Render()
+    },
+}
 
+var GetHistoryCmd = &cobra.Command{
+    Use: "getHistory",
+    Run: func(cmd *cobra.Command, args []string) {
+        var inputPeer mtproto.TL
+        switch *_fPeerType {
+        case mtproto.PEER_TYPE_USER:
+            inputPeer = mtproto.NewUserInputPeer(*_fPeerID, *_fPeerAccessHash)
+        case mtproto.PEER_TYPE_CHAT:
+            inputPeer = mtproto.NewChatInputPeer(*_fPeerID)
+        case mtproto.PEER_TYPE_CHANNEL:
+        default:
+            return
+        }
+        messages, _ := _MT.Messages_GetHistory(inputPeer, *_fLimit, *_fMinID, *_fMaxID)
+        tableMessages := tablewriter.NewWriter(os.Stdout)
+        tableMessages.SetHeader([]string{"Index", "Message ID", "From ID", "Date", "Flags", "Body"})
+        tableMessages.SetCaption(true, "Table 1. Messages")
+        idx := 0
+        for _, msg := range messages {
+            idx++
+            tableMessages.Append([]string{
+                fmt.Sprintf("%d", idx),
+                fmt.Sprintf("%d", msg.ID),
+                fmt.Sprintf("%d", msg.From),
+                time.Unix(int64(msg.Date), 0).Format("2006-01-02 15:04:05"),
+                fmt.Sprintf("Out(%t) MediaUnread(%t) Post(%t)", msg.Flags.Out, msg.Flags.MediaUnread, msg.Flags.Post),
+                fmt.Sprintf("%s", msg.Body),
+            })
+        }
+        tableMessages.Render()
+    },
+}
+
+var ReadHistoryCmd = &cobra.Command{
+    Use: "readHistory",
+    Run: func(cmd *cobra.Command, args []string) {
+        var inputPeer mtproto.TL
+        switch *_fPeerType {
+        case mtproto.PEER_TYPE_USER:
+            inputPeer = mtproto.NewUserInputPeer(*_fPeerID, *_fPeerAccessHash)
+        case mtproto.PEER_TYPE_CHAT:
+            inputPeer = mtproto.NewChatInputPeer(*_fPeerID)
+        case mtproto.PEER_TYPE_CHANNEL:
+        default:
+            return
+        }
+        _MT.Messages_ReadHistory(inputPeer, *_fMaxID)
     },
 }
 
 func init() {
-    RootCmd.AddCommand(LoginCmd, GetUpdatesCmd, GetDialogsCmd)
+    RootCmd.AddCommand(LoginCmd, GetUpdatesCmd, GetDialogsCmd, GetHistoryCmd, ReadHistoryCmd)
     LoginCmd.Flags().String("phone", "989121228718", "")
+
     GetUpdatesCmd.Flags().Int("numberOfUpdates", 10, "")
     GetUpdatesCmd.Flags().Int("minutes", 10, "")
-    GetDialogsCmd.Flags().String("peerType", "", "")
+
+    _fPeerType = RootCmd.PersistentFlags().String("peerType", "", "")
+    _fPeerID = RootCmd.PersistentFlags().Int32("peerID", 0, "")
+    _fPeerAccessHash = RootCmd.PersistentFlags().Int64("peerAccessHash", 0, "")
+    _fLimit = RootCmd.PersistentFlags().Int32("limit", 10, "")
+    _fMaxID = RootCmd.PersistentFlags().Int32("maxID", 0, "")
+    _fMinID = RootCmd.PersistentFlags().Int32("minID", 0, "")
+
 }
