@@ -12,6 +12,7 @@ import (
 )
 
 var (
+    _fPhone          *string
     _fPeerType       *string
     _fPeerID         *int32
     _fMaxID          *int32
@@ -212,7 +213,7 @@ var GetDialogsCmd = &cobra.Command{
         _ = channels
 
         tableDialogs := tablewriter.NewWriter(os.Stdout)
-        tableDialogs.SetHeader([]string{"Index", "Peer Type", "Peer ID", "AccessHash", "Date", "Last Sender ID", "Last Sender"})
+        tableDialogs.SetHeader([]string{"Index", "Peer Type", "Peer ID", "AccessHash", "Date", "Last Sender ID", "Last Sender", "UnRead Count"})
         tableDialogs.SetCaption(true, "Table 1. :: Dialogs")
 
         idx := 0
@@ -222,7 +223,6 @@ var GetDialogsCmd = &cobra.Command{
             }
             idx++
             userID := messages[d.TopMessageID].From
-            fmt.Println("From:", users[userID].FirstName, users[userID].LastName, "@", users[userID].Username, "(", userID, ")")
             tableDialogs.Append([]string{
                 fmt.Sprintf("%d", idx),
                 d.Type,
@@ -231,6 +231,7 @@ var GetDialogsCmd = &cobra.Command{
                 time.Unix(int64(messages[d.TopMessageID].Date), 0).Format("2006-01-02 15:04:05"),
                 fmt.Sprintf("%d", userID),
                 fmt.Sprintf("%s %s", users[messages[d.TopMessageID].From].FirstName, users[messages[d.TopMessageID].From].LastName),
+                fmt.Sprintf("%d", d.UnreadCount),
             })
         }
         tableDialogs.Render()
@@ -287,13 +288,29 @@ var ReadHistoryCmd = &cobra.Command{
     },
 }
 
-func init() {
-    RootCmd.AddCommand(LoginCmd, GetUpdatesCmd, GetDialogsCmd, GetHistoryCmd, ReadHistoryCmd)
-    LoginCmd.Flags().String("phone", "989121228718", "")
+var SendMessageCmd = &cobra.Command{
+    Use: "send",
+    Run: func(cmd *cobra.Command, args []string) {
+        var peer mtproto.TL
+        switch *_fPeerType {
+        case mtproto.PEER_TYPE_USER:
+            peer = mtproto.NewUserInputPeer(*_fPeerID, *_fPeerAccessHash)
+        case mtproto.PEER_TYPE_CHAT:
+            peer = mtproto.NewChatInputPeer(*_fPeerID)
+        }
+        _MT.Messages_SendMessage("Test", peer, 0)
+    },
+}
 
+func init() {
+    RootCmd.AddCommand(
+        LoginCmd, GetUpdatesCmd, GetDialogsCmd, GetHistoryCmd, ReadHistoryCmd,
+        SendMessageCmd,
+    )
     GetUpdatesCmd.Flags().Int("numberOfUpdates", 10, "")
     GetUpdatesCmd.Flags().Int("minutes", 10, "")
 
+    _fPhone = LoginCmd.Flags().String("phone", "989121228718", "")
     _fPeerType = RootCmd.PersistentFlags().String("peerType", "", "")
     _fPeerID = RootCmd.PersistentFlags().Int32("peerID", 0, "")
     _fPeerAccessHash = RootCmd.PersistentFlags().Int64("peerAccessHash", 0, "")

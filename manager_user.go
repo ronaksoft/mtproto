@@ -178,3 +178,9 @@ func NewUserInputPeer(userID int32, accessHash int64) TL_inputPeerUser {
         Access_hash: accessHash,
     }
 }
+
+func NewUserPeer(userID int32) TL_peerUser {
+    return TL_peerUser{
+        User_id: userID,
+    }
+}

@@ -70,6 +70,12 @@ func init() {
                     []CommandFlag{},
                     []Command{},
                 },
+                {
+                    "send",
+                    "Send Message to a peer",
+                    []CommandFlag{},
+                    []Command{},
+                },
             },
         },
     }

@@ -136,3 +136,9 @@ func NewChatInputPeer(chatID int32) TL_inputPeerChat {
         Chat_id: chatID,
     }
 }
+
+func NewChatPeer(chatID int32) TL_peerChat {
+    return TL_peerChat{
+        Chat_id: chatID,
+    }
+}

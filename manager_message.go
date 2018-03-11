@@ -335,24 +335,26 @@ func NewMessageMedia(input TL) IMessageMedia {
 // Functions
 // All the method call are in the following section.
 
-func (m *MTProto) Messages_SendMessage(text string, peer TL, reply_to int32) {
+func (m *MTProto) Messages_SendMessage(text string, inputPeer TL, reply_to int32) {
     resp := make(chan TL, 1)
     m.queueSend <- packetToSend{
         TL_messages_sendMessage{
             0,
-            peer,
+            inputPeer,
             reply_to,
             text,
             rand.Int63(),
-            nil,
+            TL_null{},
             nil,
         },
         resp,
     }
     x := <-resp
     switch r := x.(type) {
+    case TL_rpc_error:
+        fmt.Println(r.error_code, r.error_message)
     default:
-        log.Println(reflect.TypeOf(r))
+        fmt.Println(reflect.TypeOf(r))
         return
     }
 
