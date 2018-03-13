@@ -1,0 +1,14 @@
+for example use :
+
+1. To Login:
+    >>> tg login --phone <yourPhone> --fname <yourFirstName> --lname <yourLastName>
+
+Remember after you logged in a file in directory "conn" will be created. Every time you want
+to call other commands you must enter flag: --phone <yourPhone>
+
+2. To Get Updates:
+    >>> tg getUpdates --phone <yourPhone> --numberOfUpdates <n> --minutes <m>
+
+3. To Get History
+    >>> tg getHistory --phone <yourPhone> --peerID <x> --peerAccessHash <h>
+
