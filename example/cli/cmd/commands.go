@@ -310,7 +310,7 @@ func init() {
     GetUpdatesCmd.Flags().Int("numberOfUpdates", 10, "")
     GetUpdatesCmd.Flags().Int("minutes", 10, "")
 
-    _fPhone = LoginCmd.Flags().String("phone", "989121228718", "")
+    _fPhone = LoginCmd.Flags().String("phone", "", "")
     _fPeerType = RootCmd.PersistentFlags().String("peerType", "", "")
     _fPeerID = RootCmd.PersistentFlags().Int32("peerID", 0, "")
     _fPeerAccessHash = RootCmd.PersistentFlags().Int64("peerAccessHash", 0, "")
